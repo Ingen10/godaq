@@ -91,7 +91,7 @@ func New(port string) (*OpenDAQ, error) {
 	if err != nil {
 		return nil, err
 	}
-	time.Sleep(2 * time.Second)
+	time.Sleep(1500 * time.Millisecond)
 
 	// Obtain the device model number
 	model, _, _, err := daq.GetInfo()
@@ -121,7 +121,11 @@ func (daq *OpenDAQ) Close() error {
 
 // Send a comand and returns its response
 func (daq *OpenDAQ) sendCommand(command *Message, respLen int) (io.Reader, error) {
-	return sendCommand(daq.ser, command, respLen)
+	r, err := sendCommand(daq.ser, command, respLen)
+	if err != nil {
+		daq.ser.Flush()
+	}
+	return r, err
 }
 
 // Return the calibration values for a given input or output.

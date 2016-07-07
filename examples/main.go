@@ -15,7 +15,14 @@ func checkErr(err error) {
 }
 
 func main() {
-	daq, err := godaq.New("/dev/ttyUSB0")
+	devices, err := godaq.ListDevicePorts()
+	checkErr(err)
+	if len(devices) == 0 {
+		log.Fatal("No devices found")
+	}
+
+	fmt.Println(devices)
+	daq, err := godaq.New(devices[0].Port)
 	checkErr(err)
 	defer daq.Close()
 
