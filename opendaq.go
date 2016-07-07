@@ -33,9 +33,10 @@ const (
 
 var (
 	ErrUnknownModel  = errors.New("Unknown device model number")
-	ErrInvalidOutput = errors.New("Invalid output number")
 	ErrInvalidLed    = errors.New("Invalid LED number")
 	ErrInvalidInput  = errors.New("Invalid input number")
+	ErrInvalidOutput = errors.New("Invalid output number")
+	ErrInvalidPIO    = errors.New("Invalid PIO number")
 	ErrInvalidGainID = errors.New("Invalid gain ID")
 )
 
@@ -66,6 +67,13 @@ func registerModel(model uint8, hw HwModel) error {
 	}
 	hwModels[model] = hw
 	return nil
+}
+
+func boolToByte(val bool) byte {
+	if val {
+		return 1
+	}
+	return 0
 }
 
 type OpenDAQ struct {
@@ -246,4 +254,22 @@ func (daq *OpenDAQ) SetDAC(n uint, val int) error {
 // Set the voltage at output n
 func (daq *OpenDAQ) SetAnalog(n uint, val float32) error {
 	return daq.SetDAC(n, daq.voltsToDac(val, n))
+}
+
+func (daq *OpenDAQ) SetPIO(n uint, value bool) error {
+	if n < 1 || n > daq.NPIOs {
+		return ErrInvalidPIO
+	}
+	val := boolToByte(value)
+	_, err := daq.sendCommand(&Message{3, []byte{byte(n), val}}, 2)
+	return err
+}
+
+func (daq *OpenDAQ) SetPIODir(n uint, out bool) error {
+	if n < 1 || n > daq.NPIOs {
+		return ErrInvalidPIO
+	}
+	dir := boolToByte(out)
+	_, err := daq.sendCommand(&Message{5, []byte{byte(n), dir}}, 2)
+	return err
 }

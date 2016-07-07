@@ -26,6 +26,11 @@ func main() {
 	checkErr(err)
 	defer daq.Close()
 
+	for i := uint(1); i <= daq.NPIOs; i++ {
+		checkErr(daq.SetPIODir(i, true))
+		checkErr(daq.SetPIO(i, false))
+	}
+
 	model, version, _, err := daq.GetInfo()
 	checkErr(err)
 	fmt.Println("model:", model, "version:", version)
