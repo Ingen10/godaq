@@ -46,6 +46,7 @@ type Calib struct {
 }
 
 type HwFeatures struct {
+	Name              string
 	NPIOs, NLeds      uint
 	NInputs, NOutputs uint
 	NCalibRegs        uint

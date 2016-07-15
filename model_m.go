@@ -13,7 +13,7 @@
 
 package godaq
 
-const modelM = 1
+const ModelMId = 1
 
 var adcGainsM = []float32{1.0 / 3, 1, 2, 10, 100}
 
@@ -23,6 +23,7 @@ type ModelM struct {
 
 func NewModelM() *ModelM {
 	return &ModelM{HwFeatures{
+		Name:       "OpenDAQ M",
 		NLeds:      1,
 		NPIOs:      6,
 		NInputs:    8,
@@ -60,5 +61,5 @@ func (m *ModelM) CheckValidInputs(pos, neg uint) error {
 }
 
 func init() {
-	registerModel(modelM, NewModelM())
+	registerModel(ModelMId, NewModelM())
 }

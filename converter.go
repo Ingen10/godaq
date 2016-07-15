@@ -48,7 +48,8 @@ func (dac *DAC) clampValue(value int) int {
 
 // Convert a voltage to a DAC value
 func (dac *DAC) FromVolts(v float32, cal Calib) int {
-	baseGain := float32(int(1)<<dac.Bits) / (dac.VMax - dac.VMin)
+	max := 1 << dac.Bits
+	baseGain := float32(max) / (dac.VMax - dac.VMin)
 	if dac.Invert {
 		baseGain = -baseGain
 	}
@@ -71,7 +72,8 @@ type ADC struct {
 
 // Convert an ADC value to volts
 func (adc *ADC) ToVolts(raw int, gainId uint, cal Calib) float32 {
-	baseGain := adc.Gains[gainId] * float32(int(1)<<adc.Bits) / (adc.VMax - adc.VMin)
+	max := 1 << adc.Bits
+	baseGain := adc.Gains[gainId] * float32(max) / (adc.VMax - adc.VMin)
 	if adc.Invert {
 		baseGain = -baseGain
 	}
