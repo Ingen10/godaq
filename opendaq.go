@@ -16,10 +16,12 @@ package godaq
 import (
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"io"
 	"time"
 
 	"github.com/tarm/serial"
+	try "gopkg.in/matryer/try.v1"
 )
 
 type Color uint8
@@ -129,12 +131,14 @@ func (daq *OpenDAQ) Close() error {
 }
 
 // Send a comand and returns its response
-func (daq *OpenDAQ) sendCommand(command *Message, respLen int) (io.Reader, error) {
-	r, err := sendCommand(daq.ser, command, respLen)
-	if err != nil {
-		daq.ser.Flush()
-	}
-	return r, err
+func (daq *OpenDAQ) sendCommand(command *Message, respLen int) (r io.Reader, err error) {
+	// Retry the command up to 8 times
+	err = try.Do(func(attempt int) (bool, error) {
+		var e error
+		r, e = sendCommand(daq.ser, command, respLen)
+		return attempt < 8, e
+	})
+	return
 }
 
 // Return the calibration values for a given input or output.
@@ -201,7 +205,7 @@ func (daq *OpenDAQ) SetLED(n uint, c Color) error {
 	if c > 3 {
 		return errors.New("Invalid LED color")
 	}
-	_, err := daq.sendCommand(&Message{18, []byte{byte(c)}}, 1)
+	_, err := daq.sendCommand(&Message{18, []byte{byte(c), byte(n)}}, 2)
 	return err
 }
 
@@ -248,12 +252,15 @@ func (daq *OpenDAQ) SetDAC(n uint, val int) error {
 	if n < 1 || n > daq.NOutputs {
 		return ErrInvalidOutput
 	}
-	_, err := daq.sendCommand(&Message{24, toBytes(int16(val))}, 2)
+	out := toBytes(int16(val))
+	out = append(out, byte(n))
+	_, err := daq.sendCommand(&Message{13, out}, 3)
 	return err
 }
 
 // Set the voltage at output n
 func (daq *OpenDAQ) SetAnalog(n uint, val float32) error {
+	fmt.Println(n, val, daq.voltsToDac(val, n))
 	return daq.SetDAC(n, daq.voltsToDac(val, n))
 }
 
