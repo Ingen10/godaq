@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/opendaq/godaq"
 )
@@ -10,6 +11,18 @@ import (
 func checkErr(err error) {
 	if err != nil {
 		log.Fatal(err)
+	}
+}
+
+func testLeds(daq *godaq.OpenDAQ) {
+	for j := 0; j <= 2000; j++ {
+		for color := godaq.OFF; color <= godaq.YELLOW; color++ {
+			for i := uint(1); i <= daq.NLeds; i++ {
+				checkErr(daq.SetLED(i, color))
+			}
+			time.Sleep(time.Millisecond * 10)
+		}
+		fmt.Println(j)
 	}
 }
 
@@ -34,18 +47,15 @@ func main() {
 	checkErr(err)
 	fmt.Println("model:", model, "version:", version)
 
-	for i := uint(1); i <= daq.NLeds; i++ {
-		checkErr(daq.SetLED(i, godaq.RED))
+	//testLeds(daq)
+
+	for i := uint(1); i <= daq.NOutputs; i++ {
+		checkErr(daq.SetAnalog(i, 20.0))
 	}
 
-	//for i := uint(1); i <= daq.NOutputs; i++ {
-	checkErr(daq.SetAnalog(3, -1))
-	checkErr(daq.SetAnalog(4, 1))
-	//}
+	checkErr(daq.ConfigureADC(2, 0, 0, 1))
 
-	checkErr(daq.ConfigureADC(1, 0, 1, 1))
-
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 20; i++ {
 		val, err := daq.ReadAnalog()
 		checkErr(err)
 		fmt.Println(val)

@@ -30,9 +30,9 @@ func newModelTP4X() *ModelTP4X {
 		NOutputs:   4,
 		NCalibRegs: 1,
 
-		Adc: ADC{Bits: 16, Signed: true, VMin: -4.096, VMax: 4.096, Gains: adcGainsTP4X},
+		Adc: ADC{Bits: 16, Signed: true, VMin: -23.75, VMax: 23.75, Gains: adcGainsTP4X},
 		// The DAC has 12 bits, but the firmware transforms the values
-		Dac: DAC{Bits: 16, Signed: true, VMin: 0.0, VMax: 2.5},
+		Dac: DAC{Bits: 16, Signed: true, VMin: -23.75, VMax: 23.75},
 	}}
 }
 

@@ -16,8 +16,8 @@ package godaq
 import (
 	"encoding/binary"
 	"errors"
-	"fmt"
 	"io"
+	"sync"
 	"time"
 
 	"github.com/tarm/serial"
@@ -84,6 +84,7 @@ type OpenDAQ struct {
 	HwFeatures
 	hw    HwModel
 	calib []Calib
+	sync.Mutex
 
 	// Input state (needed for converting ADC values to volts)
 	gainId   uint
@@ -97,7 +98,7 @@ func New(port string) (*OpenDAQ, error) {
 	daq.posInput = 1 // 0 is not a valid default for posInput
 
 	// Setup and open the serial port
-	serCfg := &serial.Config{Name: port, Baud: 115200, ReadTimeout: time.Second}
+	serCfg := &serial.Config{Name: port, Baud: 115200, ReadTimeout: time.Millisecond * 100}
 	daq.ser, err = serial.OpenPort(serCfg)
 	if err != nil {
 		return nil, err
@@ -132,6 +133,8 @@ func (daq *OpenDAQ) Close() error {
 
 // Send a comand and returns its response
 func (daq *OpenDAQ) sendCommand(command *Message, respLen int) (r io.Reader, err error) {
+	daq.Lock()
+	defer daq.Unlock()
 	// Retry the command up to 8 times
 	err = try.Do(func(attempt int) (bool, error) {
 		var e error
@@ -260,7 +263,6 @@ func (daq *OpenDAQ) SetDAC(n uint, val int) error {
 
 // Set the voltage at output n
 func (daq *OpenDAQ) SetAnalog(n uint, val float32) error {
-	fmt.Println(n, val, daq.voltsToDac(val, n))
 	return daq.SetDAC(n, daq.voltsToDac(val, n))
 }
 
