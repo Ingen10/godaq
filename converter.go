@@ -71,15 +71,21 @@ type ADC struct {
 }
 
 // Convert an ADC value to volts
-func (adc *ADC) ToVolts(raw int, gainId uint, cal Calib) float32 {
+// cal1: pre-PGA calibration values
+// cal2: post-PGA calibration values
+func (adc *ADC) ToVolts(raw int, gainId uint, cal1, cal2 Calib) float32 {
 	max := 1 << adc.Bits
-	baseGain := adc.Gains[gainId] * float32(max) / (adc.VMax - adc.VMin)
-	if adc.Invert {
-		baseGain = -baseGain
-	}
+	gain1 := adc.Gains[gainId] * cal2.Gain
+	gain2 := float32(max) / (adc.VMax - adc.VMin) * cal1.Gain
+
 	baseOffs := 0
 	if !adc.Signed {
 		baseOffs = 1 << (adc.Bits) / 2
 	}
-	return (float32(raw-baseOffs) - cal.Offset) / (baseGain * cal.Gain)
+
+	v := (((float32(raw-baseOffs) - cal2.Offset) / gain1) - cal1.Offset) / gain2
+	if adc.Invert {
+		return -v
+	}
+	return v
 }

@@ -58,7 +58,7 @@ type HwFeatures struct {
 
 type HwModel interface {
 	GetFeatures() HwFeatures
-	GetCalibIndex(isOutput bool, n, gainId uint, diffMode bool) (uint, error)
+	GetCalibIndex(isOutput, diffMode, secondStage bool, n, gainId uint) (uint, error)
 	CheckValidInputs(pos, neg uint) error
 }
 
@@ -147,8 +147,8 @@ func (daq *OpenDAQ) sendCommand(command *Message, respLen int) (r io.Reader, err
 // Return the calibration values for a given input or output.
 // The gain ID and the input mode (single-ended or differential) are needed.
 // Different device models use different calibration schemas.
-func (daq *OpenDAQ) GetCalib(isOutput bool, n, gainId uint, diffMode bool) Calib {
-	idx, err := daq.hw.GetCalibIndex(isOutput, n, gainId, diffMode)
+func (daq *OpenDAQ) GetCalib(isOutput, diffMode, secondStage bool, n, gainId uint) Calib {
+	idx, err := daq.hw.GetCalibIndex(isOutput, diffMode, secondStage, n, gainId)
 	if err != nil {
 		return Calib{1, 0}
 	}
@@ -158,15 +158,16 @@ func (daq *OpenDAQ) GetCalib(isOutput bool, n, gainId uint, diffMode bool) Calib
 // Convert a voltage to a DAC value given the number of the output
 func (daq *OpenDAQ) voltsToDac(v float32, n uint) int {
 	// TODO: add caching?
-	cal := daq.GetCalib(true, n, 0, false)
+	cal := daq.GetCalib(true, false, false, n, 0)
 	return daq.Dac.FromVolts(v, cal)
 }
 
 // Convert an ADC value to volts
 func (daq *OpenDAQ) adcToVolts(raw int) float32 {
 	// TODO: add caching?
-	cal := daq.GetCalib(false, daq.posInput, daq.gainId, daq.diffMode)
-	return daq.Adc.ToVolts(raw, daq.gainId, cal)
+	cal1 := daq.GetCalib(false, daq.diffMode, false, daq.posInput, daq.gainId)
+	cal2 := daq.GetCalib(false, daq.diffMode, true, daq.posInput, daq.gainId)
+	return daq.Adc.ToVolts(raw, daq.gainId, cal1, cal2)
 }
 
 func (daq *OpenDAQ) GetInfo() (model, version uint8, serial uint32, err error) {
@@ -198,7 +199,7 @@ func (daq *OpenDAQ) readCalib(nReg uint8) (Calib, error) {
 		Offs int16
 	}{}
 	binary.Read(buf, binary.BigEndian, &ret)
-	return Calib{1. + float32(ret.Gain)/1e5, float32(ret.Offs)}, nil
+	return Calib{1. + float32(ret.Gain)/(1<<16), float32(ret.Offs) / (1 << 7)}, nil
 }
 
 func (daq *OpenDAQ) SetLED(n uint, c Color) error {

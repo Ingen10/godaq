@@ -13,7 +13,11 @@
 
 package godaq
 
-const ModelSId = 2
+const (
+	ModelSId  = 2
+	sNInputs  = 8
+	sNOutputs = 1
+)
 
 var adcGainsS = []float32{1, 2, 4, 5, 8, 10, 16, 20}
 
@@ -26,9 +30,9 @@ func NewModelS() *ModelS {
 		Name:       "OpenDAQ S",
 		NLeds:      1,
 		NPIOs:      6,
-		NInputs:    8,
-		NOutputs:   1,
-		NCalibRegs: 1 + 8*2,
+		NInputs:    sNInputs,
+		NOutputs:   sNOutputs,
+		NCalibRegs: uint(sNOutputs + 2*(sNInputs+len(adcGainsS))),
 
 		Adc: ADC{Bits: 14, Signed: true, VMin: -4.096, VMax: 4.096, Gains: adcGainsS},
 		// The DAC has 12 bits, but the firmware transforms the values
@@ -40,16 +44,28 @@ func (m *ModelS) GetFeatures() HwFeatures {
 	return m.HwFeatures
 }
 
-func (m *ModelS) GetCalibIndex(isOutput bool, n, gainId uint, diffMode bool) (uint, error) {
+func (m *ModelS) GetCalibIndex(isOutput, diffMode, secondStage bool, n, gainId uint) (uint, error) {
 	if isOutput {
-		return 0, nil
+		if n < 1 || n > m.NOutputs {
+			return 0, ErrInvalidOutput
+		}
+		return n - 1, nil
 	}
-	if n < 1 || n > m.NInputs {
-		return 0, ErrInvalidInput
+
+	var index uint
+	if secondStage {
+		if gainId >= uint(len(m.Adc.Gains)) {
+			return 0, ErrInvalidGainID
+		}
+		index = m.NOutputs + m.NInputs + gainId
+	} else {
+		if n < 1 || n > m.NInputs {
+			return 0, ErrInvalidInput
+		}
+		index = m.NOutputs + n - 1
 	}
-	index := m.NOutputs + n
 	if diffMode {
-		index += m.NInputs
+		index += m.NInputs + uint(len(m.Adc.Gains))
 	}
 	return index, nil
 }

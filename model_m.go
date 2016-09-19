@@ -13,7 +13,11 @@
 
 package godaq
 
-const ModelMId = 1
+const (
+	ModelMId  = 1
+	mNInputs  = 8
+	mNOutputs = 1
+)
 
 var adcGainsM = []float32{1.0 / 3, 1, 2, 10, 100}
 
@@ -26,9 +30,9 @@ func NewModelM() *ModelM {
 		Name:       "OpenDAQ M",
 		NLeds:      1,
 		NPIOs:      6,
-		NInputs:    8,
-		NOutputs:   1,
-		NCalibRegs: uint(1 + len(adcGainsM)),
+		NInputs:    mNInputs,
+		NOutputs:   mNOutputs,
+		NCalibRegs: uint(mNOutputs + mNInputs + len(adcGainsM)),
 
 		Adc: ADC{Bits: 16, Signed: true, VMin: -4.096, VMax: 4.096,
 			Invert: true, Gains: adcGainsM},
@@ -40,14 +44,31 @@ func (m *ModelM) GetFeatures() HwFeatures {
 	return m.HwFeatures
 }
 
-func (m *ModelM) GetCalibIndex(isOutput bool, n, gainId uint, diffMode bool) (uint, error) {
+// Get the index of a calibration register.
+// Each register contains a pair of calibration values: a gain and and offset.
+//
+// isOutput: Obtain the calibration values of an output
+// diffMode: Some models have different calibration values depending on the input mode (single-ended or differential)
+// secondStage: The inputs with a PGA need two calibration registers. One is applied before the PGA and the other
+// is applied after the PGA (second stage)
+func (m *ModelM) GetCalibIndex(isOutput, diffMode, secondStage bool, n, gainId uint) (uint, error) {
 	if isOutput {
-		return 0, nil
+		if n < 1 || n > m.NOutputs {
+			return 0, ErrInvalidOutput
+		}
+		return n - 1, nil
 	}
-	if gainId >= uint(len(m.Adc.Gains)) {
-		return 0, ErrInvalidGainID
+	if secondStage {
+		if gainId >= uint(len(m.Adc.Gains)) {
+			return 0, ErrInvalidGainID
+		}
+		return m.NOutputs + m.NInputs + gainId, nil
 	}
-	return gainId + 1, nil
+
+	if n < 1 || n > m.NInputs {
+		return 0, ErrInvalidInput
+	}
+	return m.NOutputs + n - 1, nil
 }
 
 func (m *ModelM) CheckValidInputs(pos, neg uint) error {

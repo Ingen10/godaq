@@ -1,34 +1,35 @@
 package godaq
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
-func TestCalibIndex(t *testing.T) {
+func TestMCalibIndex(t *testing.T) {
 	hw := NewModelM()
-	idx, err := hw.GetCalibIndex(true, 0, 0, false)
+	idx, err := hw.GetCalibIndex(true, false, false, 1, 0)
 	assert.EqualValues(t, 0, idx)
 	assert.Nil(t, err)
 
-	for i := uint(0); i < hw.NInputs; i++ {
-		idx, err := hw.GetCalibIndex(false, i, 0, false)
-		assert.EqualValues(t, 1, idx)
+	for i := uint(1); i <= hw.NInputs; i++ {
+		idx, err := hw.GetCalibIndex(false, false, false, i, 0)
+		assert.EqualValues(t, i, idx)
 		assert.Nil(t, err)
 	}
 
 	for i := uint(0); i < uint(len(hw.Adc.Gains)); i++ {
-		idx, err := hw.GetCalibIndex(false, 0, i, false)
-		assert.EqualValues(t, 1+i, idx)
+		idx, err := hw.GetCalibIndex(false, false, true, 1, i)
+		assert.EqualValues(t, 9+i, idx)
 		assert.Nil(t, err)
 
-		idx, err = hw.GetCalibIndex(false, i, i, true)
-		assert.EqualValues(t, 1+i, idx)
+		idx, err = hw.GetCalibIndex(false, true, true, i+1, i)
+		assert.EqualValues(t, 9+i, idx)
 		assert.Nil(t, err)
 	}
 }
 
-func TestValidInputs(t *testing.T) {
+func TestMValidInputs(t *testing.T) {
 	validNegInputs := []uint{0, 5, 6, 7, 8, 25}
 	hw := NewModelM()
 
