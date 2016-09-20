@@ -139,6 +139,9 @@ func (daq *OpenDAQ) sendCommand(command *Message, respLen int) (r io.Reader, err
 	err = try.Do(func(attempt int) (bool, error) {
 		var e error
 		r, e = sendCommand(daq.ser, command, respLen)
+		if e != nil {
+			daq.ser.Flush()
+		}
 		return attempt < 8, e
 	})
 	return
