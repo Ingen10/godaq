@@ -13,53 +13,55 @@
 
 package godaq
 
-const ModelSId = 2
+const ModelNId = 3
 
-var adcGainsS = []float32{1, 2, 4, 5, 8, 10, 16, 20}
+var adcGainsN = []float32{1, 2, 4, 5, 8, 10, 16, 32}
 
-type ModelS struct {
+type ModelN struct {
 	HwFeatures
 }
 
-func NewModelS() *ModelS {
+func NewModelN() *ModelN {
 	nInputs := uint(8)
 	nOutputs := uint(1)
 
-	return &ModelS{HwFeatures{
-		Name:       "OpenDAQ S",
+	return &ModelN{HwFeatures{
+		Name:       "OpenDAQ N",
 		NLeds:      1,
 		NPIOs:      6,
 		NInputs:    nInputs,
 		NOutputs:   nOutputs,
-		NCalibRegs: nOutputs + 2*nInputs,
+		NCalibRegs: nOutputs + 2*(nInputs+uint(len(adcGainsN))),
 
-		Adc: ADC{Bits: 16, Signed: true, VMin: -12.0, VMax: 12.0, Gains: adcGainsS},
+		Adc: ADC{Bits: 16, Signed: true, VMin: -12.288, VMax: 12.288, Gains: adcGainsN},
 		// The DAC has 12 bits, but the firmware transforms the values
-		Dac: DAC{Bits: 16, Signed: true, VMin: 0.0, VMax: 4.096},
+		Dac: DAC{Bits: 16, Signed: true, VMin: -4.096, VMax: 4.096},
 	}}
 }
 
-func (m *ModelS) GetFeatures() HwFeatures {
+func (m *ModelN) GetFeatures() HwFeatures {
 	return m.HwFeatures
 }
 
-func (m *ModelS) GetCalibIndex(isOutput, diffMode, secondStage bool, n, gainId uint) (uint, error) {
+func (m *ModelN) GetCalibIndex(isOutput, diffMode, secondStage bool, n, gainId uint) (uint, error) {
 	if isOutput {
 		if n < 1 || n > m.NOutputs {
 			return 0, ErrInvalidOutput
 		}
 		return n - 1, nil
 	}
-	if n < 1 || n > m.NInputs || secondStage {
+
+	if n < 1 || n > m.NInputs {
 		return 0, ErrInvalidInput
 	}
-	if diffMode {
-		return m.NOutputs + m.NInputs + n - 1, nil
+	index := m.NOutputs + n - 1
+	if secondStage {
+		index += m.NInputs + n - 1
 	}
-	return m.NOutputs + n - 1, nil
+	return index, nil
 }
 
-func (m *ModelS) CheckValidInputs(pos, neg uint) error {
+func (m *ModelN) CheckValidInputs(pos, neg uint) error {
 	if pos < 1 || pos > m.NInputs {
 		return ErrInvalidInput
 	}
@@ -71,5 +73,5 @@ func (m *ModelS) CheckValidInputs(pos, neg uint) error {
 
 func init() {
 	// Register this model
-	registerModel(ModelSId, NewModelS())
+	registerModel(ModelNId, NewModelN())
 }

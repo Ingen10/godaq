@@ -6,8 +6,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestTP4XCalibIndex(t *testing.T) {
-	hw := newModelTP4X()
+func TestTP04ABCalibIndex(t *testing.T) {
+	hw := newModelTP04AB()
+	assert.Equal(t, "TP04AB", hw.Name)
+	assert.EqualValues(t, 10, hw.NCalibRegs)
 
 	for i := uint(0); i < hw.NOutputs; i++ {
 		idx, err := hw.GetCalibIndex(true, false, false, i+1, 0)
@@ -16,18 +18,13 @@ func TestTP4XCalibIndex(t *testing.T) {
 	}
 
 	for i := uint(0); i < hw.NInputs; i++ {
+		// first stage calibration slots
 		idx, err := hw.GetCalibIndex(false, false, false, i+1, 0)
-		assert.EqualValues(t, 4+i, idx)
+		assert.EqualValues(t, hw.NOutputs+i, idx)
 		assert.Nil(t, err)
-	}
-
-	for i := uint(0); i < uint(len(hw.Adc.Gains)); i++ {
-		idx, err := hw.GetCalibIndex(false, false, true, 1, i)
-		assert.EqualValues(t, 8+i, idx)
-		assert.Nil(t, err)
-
-		idx, err = hw.GetCalibIndex(false, true, true, i+1, i)
-		assert.EqualValues(t, 8+i, idx)
+		// second stage calibration slots
+		idx, err = hw.GetCalibIndex(false, false, true, i+1, 0)
+		assert.EqualValues(t, hw.NOutputs+hw.NInputs+i, idx)
 		assert.Nil(t, err)
 	}
 }

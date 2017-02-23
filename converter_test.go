@@ -37,6 +37,12 @@ func TestFromVoltsSigned(t *testing.T) {
 	assert.Equal(t, 0, dac.FromVolts(0.0, Calib{1, 0}))
 	assert.Equal(t, 2047, dac.FromVolts(4.096, Calib{1, 0}))
 	assert.Equal(t, 2047, dac.FromVolts(10.0, Calib{1, 0}))
+
+	dac16 := DAC{Bits: 16, Signed: true, VMin: 0.0, VMax: 4.096}
+	assert.Equal(t, 0, dac16.FromVolts(0.0, Calib{1, 0}))
+	assert.Equal(t, 16384, dac16.FromVolts(2.048, Calib{1, 0}))
+	assert.Equal(t, 32767, dac16.FromVolts(4.096, Calib{1, 0}))
+	assert.Equal(t, 32767, dac16.FromVolts(10.0, Calib{1, 0}))
 }
 
 func TestFromVoltsUnsigned(t *testing.T) {

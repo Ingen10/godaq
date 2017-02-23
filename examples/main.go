@@ -15,12 +15,12 @@ func checkErr(err error) {
 }
 
 func testLeds(daq *godaq.OpenDAQ) {
-	for j := 0; j <= 2000; j++ {
+	for j := 0; j <= 20; j++ {
 		for color := godaq.OFF; color <= godaq.YELLOW; color++ {
 			for i := uint(1); i <= daq.NLeds; i++ {
 				checkErr(daq.SetLED(i, color))
 			}
-			time.Sleep(time.Millisecond * 10)
+			time.Sleep(time.Millisecond * 100)
 		}
 		fmt.Println(j)
 	}
@@ -38,22 +38,35 @@ func main() {
 	checkErr(err)
 	defer daq.Close()
 
+	model, version, _, err := daq.GetInfo()
+	checkErr(err)
+	fmt.Println("model:", model, "version:", version)
+
+	fmt.Println("DAC calib:")
+	for i := uint(1); i <= daq.NInputs; i++ {
+		calib := daq.GetCalib(true, false, false, 1, 0)
+		fmt.Println(calib)
+	}
+	fmt.Println("ADC calib:")
+	for i := uint(1); i <= daq.NInputs; i++ {
+		calib := daq.GetCalib(false, false, false, i, 0)
+		fmt.Printf("Calib %d (1st stage): %v\n", i, calib)
+		calib = daq.GetCalib(false, false, true, i, 0)
+		fmt.Printf("Calib %d (2nd stage): %v\n", i, calib)
+	}
+
 	for i := uint(1); i <= daq.NPIOs; i++ {
 		checkErr(daq.SetPIODir(i, true))
 		checkErr(daq.SetPIO(i, false))
 	}
 
-	model, version, _, err := daq.GetInfo()
-	checkErr(err)
-	fmt.Println("model:", model, "version:", version)
-
-	//testLeds(daq)
+	testLeds(daq)
 
 	for i := uint(1); i <= daq.NOutputs; i++ {
-		checkErr(daq.SetAnalog(i, 20.0))
+		checkErr(daq.SetAnalog(i, 2.0))
 	}
 
-	checkErr(daq.ConfigureADC(2, 0, 0, 1))
+	checkErr(daq.ConfigureADC(1, 0, 0, 1))
 
 	for i := 0; i < 20; i++ {
 		val, err := daq.ReadAnalog()

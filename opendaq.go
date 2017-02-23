@@ -202,7 +202,11 @@ func (daq *OpenDAQ) readCalib(nReg uint8) (Calib, error) {
 		Offs int16
 	}{}
 	binary.Read(buf, binary.BigEndian, &ret)
-	return Calib{1. + float32(ret.Gain)/(1<<16), float32(ret.Offs) / (1 << 7)}, nil
+	//TODO: refactor this
+	if uint(nReg) < daq.NOutputs {
+		return Calib{1. + float32(ret.Gain)/(1<<16), float32(ret.Offs) / (1 << 16)}, nil
+	}
+	return Calib{1. + float32(ret.Gain)/(1<<16), float32(ret.Offs) / (1 << 5)}, nil
 }
 
 func (daq *OpenDAQ) SetLED(n uint, c Color) error {

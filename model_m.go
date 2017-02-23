@@ -13,11 +13,7 @@
 
 package godaq
 
-const (
-	ModelMId  = 1
-	mNInputs  = 8
-	mNOutputs = 1
-)
+const ModelMId = 1
 
 var adcGainsM = []float32{1.0 / 3, 1, 2, 10, 100}
 
@@ -26,17 +22,20 @@ type ModelM struct {
 }
 
 func NewModelM() *ModelM {
+	nInputs := uint(8)
+	nOutputs := uint(1)
+
 	return &ModelM{HwFeatures{
 		Name:       "OpenDAQ M",
 		NLeds:      1,
 		NPIOs:      6,
-		NInputs:    mNInputs,
-		NOutputs:   mNOutputs,
-		NCalibRegs: uint(mNOutputs + mNInputs + len(adcGainsM)),
+		NInputs:    nInputs,
+		NOutputs:   nOutputs,
+		NCalibRegs: nOutputs + nInputs + uint(len(adcGainsM)),
 
 		Adc: ADC{Bits: 16, Signed: true, VMin: -4.096, VMax: 4.096,
 			Invert: true, Gains: adcGainsM},
-		Dac: DAC{Bits: 14, Signed: false, VMin: -4.096, VMax: 4.096},
+		Dac: DAC{Bits: 16, Signed: true, VMin: -4.096, VMax: 4.096},
 	}}
 }
 

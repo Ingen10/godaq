@@ -48,16 +48,23 @@ func (dac *DAC) clampValue(value int) int {
 
 // Convert a voltage to a DAC value
 func (dac *DAC) FromVolts(v float32, cal Calib) int {
-	max := 1 << dac.Bits
-	baseGain := float32(max) / (dac.VMax - dac.VMin)
+	min, max := dac.bitRange()
+
+	var baseGain float32
+	if dac.Signed {
+		baseGain = dac.VMax / float32(max+1)
+	} else {
+		baseGain = (dac.VMax - dac.VMin) / float32(max-min+1)
+	}
+
 	if dac.Invert {
 		baseGain = -baseGain
 	}
-	baseOffs := float32(0)
+	val := roundInt((v - cal.Offset) / (baseGain * cal.Gain))
+
 	if !dac.Signed {
-		baseOffs = -dac.VMin * baseGain
+		val -= int(dac.VMin / baseGain)
 	}
-	val := roundInt(v*baseGain*cal.Gain + cal.Offset + baseOffs)
 	return dac.clampValue(val)
 }
 
