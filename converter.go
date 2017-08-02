@@ -81,16 +81,18 @@ type ADC struct {
 // cal1: pre-PGA calibration values
 // cal2: post-PGA calibration values
 func (adc *ADC) ToVolts(raw int, gainId uint, cal1, cal2 Calib) float32 {
-	max := 1 << adc.Bits
-	gain1 := adc.Gains[gainId] * cal2.Gain
-	gain2 := float32(max) / (adc.VMax - adc.VMin) * cal1.Gain
-
 	baseOffs := 0
 	if !adc.Signed {
 		baseOffs = 1 << (adc.Bits) / 2
 	}
 
-	v := (((float32(raw-baseOffs) - cal2.Offset) / gain1) - cal1.Offset) / gain2
+	max := 1 << adc.Bits
+	adcGain := float32(max) / (adc.VMax - adc.VMin)
+	pgaGain := adc.Gains[gainId]
+	offset := cal1.Offset + cal2.Offset*pgaGain
+	gain := adcGain * pgaGain * cal1.Gain * cal2.Gain
+
+	v := (float32(raw-baseOffs) - offset) / gain
 	if adc.Invert {
 		return -v
 	}

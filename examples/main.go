@@ -42,12 +42,12 @@ func main() {
 	checkErr(err)
 	fmt.Println("model:", model, "version:", version)
 
-	fmt.Println("DAC calib:")
-	for i := uint(1); i <= daq.NInputs; i++ {
-		calib := daq.GetCalib(true, false, false, 1, 0)
+	fmt.Println("\nDAC calib:")
+	for i := uint(1); i <= daq.NOutputs; i++ {
+		calib := daq.GetCalib(true, false, false, i, 0)
 		fmt.Println(calib)
 	}
-	fmt.Println("ADC calib:")
+	fmt.Println("\nADC calib:")
 	for i := uint(1); i <= daq.NInputs; i++ {
 		calib := daq.GetCalib(false, false, false, i, 0)
 		fmt.Printf("Calib %d (1st stage): %v\n", i, calib)
@@ -60,15 +60,16 @@ func main() {
 		checkErr(daq.SetPIO(i, false))
 	}
 
-	testLeds(daq)
+	//testLeds(daq)
 
 	for i := uint(1); i <= daq.NOutputs; i++ {
 		checkErr(daq.SetAnalog(i, 2.0))
 	}
 
-	checkErr(daq.ConfigureADC(1, 0, 0, 1))
+	checkErr(daq.ConfigureADC(1, 0, 1, 10))
 
-	for i := 0; i < 20; i++ {
+	fmt.Println("\nAnalog readings:")
+	for i := 0; i < 8; i++ {
 		val, err := daq.ReadAnalog()
 		checkErr(err)
 		fmt.Println(val)
