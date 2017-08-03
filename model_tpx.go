@@ -30,7 +30,7 @@ type ModelTPX struct {
 
 func newModelTP08ABBR() *ModelTPX {
 	nInputs := uint(4)
-	nOutputs := uint(4)
+	nOutputs := uint(2)
 	return &ModelTPX{HwFeatures{
 		Name:       "TP08ABBR",
 		NLeds:      8,
@@ -39,8 +39,8 @@ func newModelTP08ABBR() *ModelTPX {
 		NOutputs:   nOutputs,
 		NCalibRegs: uint(nOutputs + 2*nInputs),
 
-		Adc: ADC{Bits: 16, Signed: true, VMin: -23.75, VMax: 23.75, Gains: adcGainsTP08},
-		Dac: DAC{Bits: 16, Signed: true, VMin: -23.75, VMax: 23.75},
+		Adc: ADC{Bits: 16, Signed: true, VMin: -24.0, VMax: 24.0, Gains: adcGainsTP08},
+		Dac: DAC{Bits: 16, Signed: true, VMin: -24.0, VMax: 24.0},
 	}}
 }
 
