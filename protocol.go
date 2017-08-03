@@ -18,6 +18,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"io"
+	"time"
 )
 
 type CommandNumber uint8
@@ -85,5 +86,6 @@ func sendCommand(ser io.ReadWriter, command *Message, respLen int) (io.Reader, e
 	if _, err := ser.Read(data); err != nil {
 		return nil, err
 	}
+	time.Sleep(time.Millisecond)
 	return parseResponse(data)
 }

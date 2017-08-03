@@ -26,15 +26,16 @@ func testLeds(daq *godaq.OpenDAQ) {
 	}
 }
 
-func main() {
-	devices, err := godaq.ListDevicePorts()
-	checkErr(err)
-	if len(devices) == 0 {
-		log.Fatal("No devices found")
-	}
+func checkOpendaq() {
+	//devices, err := godaq.ListDevicePorts()
+	//checkErr(err)
+	//if len(devices) == 0 {
+	//log.Fatal("No devices found")
+	//}
+	//fmt.Println(devices)
 
-	fmt.Println(devices)
-	daq, err := godaq.New(devices[0].Port)
+	//daq, err := godaq.New(devices[0].Port)
+	daq, err := godaq.New("/dev/ttyACM0")
 	checkErr(err)
 	defer daq.Close()
 
@@ -55,23 +56,29 @@ func main() {
 		fmt.Printf("Calib %d (2nd stage): %v\n", i, calib)
 	}
 
-	for i := uint(1); i <= daq.NPIOs; i++ {
-		checkErr(daq.SetPIODir(i, true))
-		checkErr(daq.SetPIO(i, false))
-	}
-
 	//testLeds(daq)
 
-	for i := uint(1); i <= daq.NOutputs; i++ {
-		checkErr(daq.SetAnalog(i, 2.0))
-	}
+	//for i := uint(1); i <= daq.NPIOs; i++ {
+	//checkErr(daq.SetPIODir(i, true))
+	//checkErr(daq.SetPIO(i, false))
+	//}
 
-	checkErr(daq.ConfigureADC(1, 0, 1, 10))
+	//for i := uint(1); i <= daq.NOutputs; i++ {
+	//checkErr(daq.SetAnalog(i, 2.0))
+	//}
+
+	//checkErr(daq.ConfigureADC(1, 0, 1, 10))
 
 	fmt.Println("\nAnalog readings:")
 	for i := 0; i < 8; i++ {
 		val, err := daq.ReadAnalog()
 		checkErr(err)
 		fmt.Println(val)
+	}
+}
+
+func main() {
+	for i := 0; i < 40; i++ {
+		checkOpendaq()
 	}
 }
