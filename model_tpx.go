@@ -21,7 +21,6 @@ const (
 
 var (
 	adcGainsTP04 = []float32{1, 2, 4, 5, 8, 10, 16, 32}
-	adcGainsTP08 = []float32{1, 2, 4, 8, 16, 32, 64, 128}
 )
 
 type ModelTPX struct {
@@ -39,7 +38,7 @@ func newModelTP08ABBR() *ModelTPX {
 		NOutputs:   nOutputs,
 		NCalibRegs: uint(nOutputs + 2*nInputs),
 
-		Adc: ADC{Bits: 16, Signed: true, VMin: -24.0, VMax: 24.0, Gains: adcGainsTP08},
+		Adc: ADC{Bits: 16, Signed: true, VMin: -24.0, VMax: 24.0, Gains: adcGainsTP04},
 		Dac: DAC{Bits: 16, Signed: true, VMin: -24.0, VMax: 24.0},
 	}}
 }
