@@ -31,25 +31,9 @@ func newModelTP08ABBR() *ModelTPX {
 	nInputs := uint(4)
 	nOutputs := uint(2)
 	return &ModelTPX{HwFeatures{
-		Name:       "TP08ABBR",
+		Name:       "EM08-ABRR",
 		NLeds:      8,
 		NPIOs:      4,
-		NInputs:    nInputs,
-		NOutputs:   nOutputs,
-		NCalibRegs: uint(nOutputs + 2*nInputs),
-
-		Adc: ADC{Bits: 16, Signed: true, VMin: -24.0, VMax: 24.0, Gains: adcGainsTP04},
-		Dac: DAC{Bits: 16, Signed: true, VMin: -24.0, VMax: 24.0},
-	}}
-}
-
-func newModelTP04AR() *ModelTPX {
-	nInputs := uint(2)
-	nOutputs := uint(2)
-	return &ModelTPX{HwFeatures{
-		Name:       "TP04AR",
-		NLeds:      2,
-		NPIOs:      2,
 		NInputs:    nInputs,
 		NOutputs:   nOutputs,
 		NCalibRegs: uint(nOutputs + 2*nInputs),
