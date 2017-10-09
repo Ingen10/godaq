@@ -27,7 +27,7 @@ type ModelTPX struct {
 	HwFeatures
 }
 
-func newModelTP08ABBR() *ModelTPX {
+func newModelEM08ABBR() *ModelTPX {
 	nInputs := uint(4)
 	nOutputs := uint(2)
 	return &ModelTPX{HwFeatures{
@@ -92,7 +92,6 @@ func (m *ModelTPX) CheckValidInputs(pos, neg uint) error {
 
 func init() {
 	// Register this models
-	registerModel(ModelTP08ABBRId, newModelTP08ABBR())
-	registerModel(ModelTP04ARId, newModelTP04AR())
+	registerModel(ModelTP08ABBRId, newModelEM08ABBR())
 	registerModel(ModelTP04ABId, newModelTP04AB())
 }
