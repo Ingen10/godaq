@@ -31,12 +31,12 @@ func newModelTP04AB() *ModelTPX {
 	nInputs := uint(4)
 	nOutputs := uint(2)
 	return &ModelTPX{HwFeatures{
-		Name:       "TP04AB",
-		NLeds:      nInputs,
-		NPIOs:      0,
-		NInputs:    nInputs,
-		NOutputs:   nOutputs,
-		NCalibRegs: uint(nOutputs + 2*nInputs),
+		Name:           "TP04AB",
+		NLeds:          nInputs,
+		NPIOs:          0,
+		NInputs:        nInputs,
+		NHiddenOutputs: nOutputs,
+		NCalibRegs:     uint(nOutputs + 2*nInputs),
 
 		Adc: ADC{Bits: 16, Signed: true, VMin: -24.0, VMax: 24.0, Gains: adcGainsTP04},
 		Dac: DAC{Bits: 16, Signed: true, VMin: -24.0, VMax: 24.0},
@@ -47,12 +47,12 @@ func newModelEM08ABRR() *ModelTPX {
 	nInputs := uint(4)
 	nOutputs := uint(2)
 	return &ModelTPX{HwFeatures{
-		Name:       "EM08-ABRR",
-		NLeds:      nInputs,
-		NPIOs:      4,
-		NInputs:    nInputs,
-		NOutputs:   nOutputs,
-		NCalibRegs: uint(nOutputs + 2*nInputs),
+		Name:           "EM08-ABRR",
+		NLeds:          nInputs,
+		NPIOs:          4,
+		NInputs:        nInputs,
+		NHiddenOutputs: nOutputs,
+		NCalibRegs:     uint(nOutputs + 2*nInputs),
 
 		Adc: ADC{Bits: 16, Signed: true, VMin: -24.0, VMax: 24.0, Gains: adcGainsTP04},
 		Dac: DAC{Bits: 16, Signed: true, VMin: -24.0, VMax: 24.0},
@@ -79,7 +79,7 @@ func (m *ModelTPX) GetFeatures() HwFeatures {
 
 func (m *ModelTPX) GetCalibIndex(isOutput, diffMode, secondStage bool, n, gainId uint) (uint, error) {
 	if isOutput {
-		if n < 1 || n > m.NOutputs {
+		if n < 1 || n > (m.NOutputs+m.NHiddenOutputs) {
 			return 0, ErrInvalidOutput
 		}
 		return n - 1, nil
@@ -89,9 +89,9 @@ func (m *ModelTPX) GetCalibIndex(isOutput, diffMode, secondStage bool, n, gainId
 	}
 
 	if secondStage {
-		return m.NOutputs + m.NInputs + n - 1, nil
+		return m.NOutputs + m.NHiddenOutputs + m.NInputs + n - 1, nil
 	}
-	return m.NOutputs + n - 1, nil
+	return m.NOutputs + m.NHiddenOutputs + n - 1, nil
 }
 
 func (m *ModelTPX) CheckValidInputs(pos, neg uint) error {

@@ -48,13 +48,12 @@ type Calib struct {
 }
 
 type HwFeatures struct {
-	Name              string
-	NPIOs, NLeds      uint
-	NInputs, NOutputs uint
-	NCalibRegs        uint
-	Dac               DAC
-	Adc               ADC
-	NInternalOutputs  uint
+	Name                              string
+	NPIOs, NLeds                      uint
+	NInputs, NOutputs, NHiddenOutputs uint
+	NCalibRegs                        uint
+	Dac                               DAC
+	Adc                               ADC
 }
 
 type HwModel interface {
@@ -204,7 +203,7 @@ func (daq *OpenDAQ) readCalib(nReg uint8) (Calib, error) {
 	}{}
 	binary.Read(buf, binary.BigEndian, &ret)
 	//TODO: refactor this
-	if uint(nReg) < daq.NOutputs {
+	if uint(nReg) < daq.NOutputs+daq.NHiddenOutputs {
 		return Calib{1. + float32(ret.Gain)/(1<<16), float32(ret.Offs) / (1 << 16)}, nil
 	}
 	return Calib{1. + float32(ret.Gain)/(1<<16), float32(ret.Offs) / (1 << 5)}, nil
@@ -261,7 +260,7 @@ func (daq *OpenDAQ) ReadAnalog() (float32, error) {
 
 // Set the raw value of the DAC at output n
 func (daq *OpenDAQ) SetDAC(n uint, val int) error {
-	if n < 1 || n > daq.NOutputs {
+	if n < 1 || n > (daq.NOutputs+daq.NHiddenOutputs) {
 		return ErrInvalidOutput
 	}
 	out := toBytes(int16(val))
