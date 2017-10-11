@@ -14,9 +14,9 @@
 package godaq
 
 const (
-	ModelTP08ABBRId = 10
-	ModelTP04ARId   = 11
+	ModelEM08ABBRId = 10
 	ModelTP04ABId   = 12
+	ModelEM08RRLLId = 13
 )
 
 var (
@@ -27,12 +27,28 @@ type ModelTPX struct {
 	HwFeatures
 }
 
-func newModelEM08ABBR() *ModelTPX {
+func newModelTP04AB() *ModelTPX {
+	nInputs := uint(4)
+	nOutputs := uint(2)
+	return &ModelTPX{HwFeatures{
+		Name:       "TP04AB",
+		NLeds:      nInputs,
+		NPIOs:      0,
+		NInputs:    nInputs,
+		NOutputs:   nOutputs,
+		NCalibRegs: uint(nOutputs + 2*nInputs),
+
+		Adc: ADC{Bits: 16, Signed: true, VMin: -24.0, VMax: 24.0, Gains: adcGainsTP04},
+		Dac: DAC{Bits: 16, Signed: true, VMin: -24.0, VMax: 24.0},
+	}}
+}
+
+func newModelEM08ABRR() *ModelTPX {
 	nInputs := uint(4)
 	nOutputs := uint(2)
 	return &ModelTPX{HwFeatures{
 		Name:       "EM08-ABRR",
-		NLeds:      8,
+		NLeds:      nInputs,
 		NPIOs:      4,
 		NInputs:    nInputs,
 		NOutputs:   nOutputs,
@@ -43,19 +59,17 @@ func newModelEM08ABBR() *ModelTPX {
 	}}
 }
 
-func newModelTP04AB() *ModelTPX {
-	nInputs := uint(4)
-	nOutputs := uint(2)
+func newModelEM08RRLL() *ModelTPX {
+	nOutputs := uint(4)
 	return &ModelTPX{HwFeatures{
-		Name:       "TP04AB",
-		NLeds:      4,
-		NPIOs:      0,
-		NInputs:    nInputs,
+		Name:       "EM08-RRLL",
+		NLeds:      nOutputs,
+		NPIOs:      4,
+		NInputs:    0,
 		NOutputs:   nOutputs,
-		NCalibRegs: uint(nOutputs + 2*nInputs),
+		NCalibRegs: nOutputs,
 
-		Adc: ADC{Bits: 16, Signed: true, VMin: -24.0, VMax: 24.0, Gains: adcGainsTP04},
-		Dac: DAC{Bits: 16, Signed: true, VMin: -24.0, VMax: 24.0},
+		Dac: DAC{Bits: 16, Signed: true, VMin: 0, VMax: 25.0},
 	}}
 }
 
@@ -92,6 +106,7 @@ func (m *ModelTPX) CheckValidInputs(pos, neg uint) error {
 
 func init() {
 	// Register this models
-	registerModel(ModelTP08ABBRId, newModelEM08ABBR())
 	registerModel(ModelTP04ABId, newModelTP04AB())
+	registerModel(ModelEM08ABBRId, newModelEM08ABRR())
+	registerModel(ModelEM08RRLLId, newModelEM08RRLL())
 }

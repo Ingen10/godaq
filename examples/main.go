@@ -36,6 +36,7 @@ func checkOpendaq() {
 
 	//daq, err := godaq.New(devices[0].Port)
 	daq, err := godaq.New("/dev/ttyACM0")
+	fmt.Println(daq.Name)
 	checkErr(err)
 	defer daq.Close()
 
@@ -78,7 +79,7 @@ func checkOpendaq() {
 }
 
 func main() {
-	for i := 0; i < 40; i++ {
+	for i := 0; i < 1; i++ {
 		checkOpendaq()
 	}
 }

@@ -54,6 +54,7 @@ type HwFeatures struct {
 	NCalibRegs        uint
 	Dac               DAC
 	Adc               ADC
+	NInternalOutputs  uint
 }
 
 type HwModel interface {
