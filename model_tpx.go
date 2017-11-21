@@ -59,6 +59,8 @@ func newModelEM08ABRR() *ModelTPX {
 	}}
 }
 
+// This model has 4 relays and 4 current outputs.
+// In this case, Dac.VMin and Dac.VMax represent output values in mA
 func newModelEM08RRLL() *ModelTPX {
 	nOutputs := uint(4)
 	return &ModelTPX{HwFeatures{
@@ -69,7 +71,7 @@ func newModelEM08RRLL() *ModelTPX {
 		NOutputs:   nOutputs,
 		NCalibRegs: nOutputs,
 
-		Dac: DAC{Bits: 16, Signed: true, VMin: 0, VMax: 25.0},
+		Dac: DAC{Bits: 16, Signed: true, VMin: 0, VMax: 40.96},
 	}}
 }
 

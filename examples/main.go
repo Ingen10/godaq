@@ -64,18 +64,18 @@ func checkOpendaq() {
 	//checkErr(daq.SetPIO(i, false))
 	//}
 
-	//for i := uint(1); i <= daq.NOutputs; i++ {
-	//checkErr(daq.SetAnalog(i, 2.0))
-	//}
+	for i := uint(1); i <= daq.NOutputs; i++ {
+		checkErr(daq.SetAnalog(i, 10.0))
+	}
 
 	//checkErr(daq.ConfigureADC(1, 0, 1, 10))
 
-	fmt.Println("\nAnalog readings:")
-	for i := 0; i < 8; i++ {
-		val, err := daq.ReadAnalog()
-		checkErr(err)
-		fmt.Println(val)
-	}
+	//fmt.Println("\nAnalog readings:")
+	//for i := 0; i < 8; i++ {
+	//val, err := daq.ReadAnalog()
+	//checkErr(err)
+	//fmt.Println(val)
+	//}
 }
 
 func main() {
