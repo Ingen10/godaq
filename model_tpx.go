@@ -15,21 +15,22 @@ package godaq
 
 const (
 	ModelEM08ABBRId = 10
+	ModelTP04ARId   = 11
 	ModelTP04ABId   = 12
 	ModelEM08RRLLId = 13
+	ModelEM08LLLBId = 14
 )
 
-var (
-	adcGainsTP04 = []float32{1, 2, 4, 5, 8, 10, 16, 32}
-)
+var adcGainsTPX = []float32{1, 2, 4, 5, 8, 10, 16, 32}
 
 type ModelTPX struct {
 	HwFeatures
 }
 
+// AB model has 2 static/tacho inputs and 2 static inputs
 func newModelTP04AB() *ModelTPX {
 	nInputs := uint(4)
-	nOutputs := uint(2)
+	nOutputs := uint(2) // internal tacho bias DAC references
 	return &ModelTPX{HwFeatures{
 		Name:           "TP04AB",
 		NLeds:          nInputs,
@@ -38,14 +39,32 @@ func newModelTP04AB() *ModelTPX {
 		NHiddenOutputs: nOutputs,
 		NCalibRegs:     uint(nOutputs + 2*nInputs),
 
-		Adc: ADC{Bits: 16, Signed: true, VMin: -24.0, VMax: 24.0, Gains: adcGainsTP04},
+		Adc: ADC{Bits: 16, Signed: true, VMin: -24.0, VMax: 24.0, Gains: adcGainsTPX},
 		Dac: DAC{Bits: 16, Signed: true, VMin: -24.0, VMax: 24.0},
 	}}
 }
 
+// AR model has 2 static/tacho inputs and 2 relays
+func newModelTP04AR() *ModelTPX {
+	nInputs := uint(2)
+	nOutputs := uint(2) // internal tacho bias DAC references
+	return &ModelTPX{HwFeatures{
+		Name:           "TP04AR",
+		NLeds:          nInputs,
+		NPIOs:          2,
+		NInputs:        nInputs,
+		NHiddenOutputs: nOutputs,
+		NCalibRegs:     uint(nOutputs + 2*nInputs),
+
+		Adc: ADC{Bits: 16, Signed: true, VMin: -24.0, VMax: 24.0, Gains: adcGainsTPX},
+		Dac: DAC{Bits: 16, Signed: true, VMin: -24.0, VMax: 24.0},
+	}}
+}
+
+// ABRR model has 2 static/tacho inputs, 2 static inputs and 4 relays
 func newModelEM08ABRR() *ModelTPX {
 	nInputs := uint(4)
-	nOutputs := uint(2)
+	nOutputs := uint(2) // internal tacho bias DAC references
 	return &ModelTPX{HwFeatures{
 		Name:           "EM08-ABRR",
 		NLeds:          nInputs,
@@ -54,23 +73,41 @@ func newModelEM08ABRR() *ModelTPX {
 		NHiddenOutputs: nOutputs,
 		NCalibRegs:     uint(nOutputs + 2*nInputs),
 
-		Adc: ADC{Bits: 16, Signed: true, VMin: -24.0, VMax: 24.0, Gains: adcGainsTP04},
+		Adc: ADC{Bits: 16, Signed: true, VMin: -24.0, VMax: 24.0, Gains: adcGainsTPX},
 		Dac: DAC{Bits: 16, Signed: true, VMin: -24.0, VMax: 24.0},
 	}}
 }
 
-// This model has 4 relays and 4 current outputs.
+// RRLL model has 4 relays and 4 current outputs
 // In this case, Dac.VMin and Dac.VMax represent output values in mA
 func newModelEM08RRLL() *ModelTPX {
 	nOutputs := uint(4)
 	return &ModelTPX{HwFeatures{
 		Name:       "EM08-RRLL",
-		NLeds:      nOutputs,
+		NLeds:      0,
 		NPIOs:      4,
 		NInputs:    0,
 		NOutputs:   nOutputs,
 		NCalibRegs: nOutputs,
 
+		Dac: DAC{Bits: 16, Signed: true, VMin: 0, VMax: 40.96},
+	}}
+}
+
+// LLLB model has 2 analog inputs and 6 current outputs
+// In this case, Dac.VMin and Dac.VMax represent output values in mA
+func newModelEM08LLLB() *ModelTPX {
+	nInputs := uint(2)
+	nOutputs := uint(6)
+	return &ModelTPX{HwFeatures{
+		Name:       "EM08-LLLB",
+		NLeds:      nInputs,
+		NPIOs:      0,
+		NInputs:    nInputs,
+		NOutputs:   nOutputs,
+		NCalibRegs: uint(nOutputs + 2*nInputs),
+
+		Adc: ADC{Bits: 16, Signed: true, VMin: -24.0, VMax: 24.0, Gains: adcGainsTPX},
 		Dac: DAC{Bits: 16, Signed: true, VMin: 0, VMax: 40.96},
 	}}
 }
@@ -109,6 +146,8 @@ func (m *ModelTPX) CheckValidInputs(pos, neg uint) error {
 func init() {
 	// Register this models
 	registerModel(ModelTP04ABId, newModelTP04AB())
+	registerModel(ModelTP04ARId, newModelTP04AR())
 	registerModel(ModelEM08ABBRId, newModelEM08ABRR())
 	registerModel(ModelEM08RRLLId, newModelEM08RRLL())
+	registerModel(ModelEM08LLLBId, newModelEM08LLLB())
 }
