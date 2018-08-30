@@ -112,6 +112,22 @@ func newModelEM08LLLB() *ModelTPX {
 	}}
 }
 
+// LLLL model has 8 current outputs
+// In this case, Dac.VMin and Dac.VMax represent output values in mA
+func newModelEM08LLLL() *ModelTPX {
+	nOutputs := uint(8)
+	return &ModelTPX{HwFeatures{
+		Name:       "EM08-LLLL",
+		NLeds:      0,
+		NPIOs:      0,
+		NInputs:    0,
+		NOutputs:   nOutputs,
+		NCalibRegs: nOutputs,
+
+		Dac: DAC{Bits: 16, Signed: true, VMin: 0, VMax: 40.96},
+	}}
+}
+
 func (m *ModelTPX) GetFeatures() HwFeatures {
 	return m.HwFeatures
 }
@@ -150,4 +166,5 @@ func init() {
 	registerModel(ModelEM08ABBRId, newModelEM08ABRR())
 	registerModel(ModelEM08RRLLId, newModelEM08RRLL())
 	registerModel(ModelEM08LLLBId, newModelEM08LLLB())
+	registerModel(ModelEM08LLLLId, newModelEM08LLLL())
 }
