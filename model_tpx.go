@@ -67,7 +67,7 @@ func newModelEM08ABRR() *ModelTPX {
 	nInputs := uint(4)
 	nOutputs := uint(2) // internal tacho bias DAC references
 	return &ModelTPX{HwFeatures{
-		Name:           "EM08-ABRR",
+		Name:           "EM08S-ABRR",
 		NLeds:          nInputs,
 		NPIOs:          4,
 		NInputs:        nInputs,
@@ -84,7 +84,7 @@ func newModelEM08ABRR() *ModelTPX {
 func newModelEM08RRLL() *ModelTPX {
 	nOutputs := uint(4)
 	return &ModelTPX{HwFeatures{
-		Name:       "EM08-RRLL",
+		Name:       "EM08C-RRLL",
 		NLeds:      0,
 		NPIOs:      4,
 		NInputs:    0,
@@ -101,7 +101,7 @@ func newModelEM08LLLB() *ModelTPX {
 	nInputs := uint(2)
 	nOutputs := uint(6)
 	return &ModelTPX{HwFeatures{
-		Name:       "EM08-LLLB",
+		Name:       "EM08C-LLLB",
 		NLeds:      nInputs,
 		NPIOs:      0,
 		NInputs:    nInputs,
@@ -118,7 +118,7 @@ func newModelEM08LLLB() *ModelTPX {
 func newModelEM08LLLL() *ModelTPX {
 	nOutputs := uint(8)
 	return &ModelTPX{HwFeatures{
-		Name:       "EM08-LLLL",
+		Name:       "EM08C-LLLL",
 		NLeds:      0,
 		NPIOs:      0,
 		NInputs:    0,
