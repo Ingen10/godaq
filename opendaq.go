@@ -19,6 +19,7 @@ import (
 	"io"
 	"sync"
 	"time"
+	"fmt"
 
 	"github.com/tarm/serial"
 	try "gopkg.in/matryer/try.v1"
