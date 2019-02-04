@@ -186,7 +186,12 @@ func (daq *OpenDAQ) GetInfo() (model, version uint8, serial uint32, err error) {
 	binary.Read(buf, binary.BigEndian, &info)
 	model = info.Model
 	version = info.Version
-	serial = info.Serial
+
+	if (model >= ModelEM08ABBRId){
+		serial = fmt.Sprintf("8%02d%04d", model, info.Serial)
+	} else {
+		serial = info.Serial
+	}
 	return
 }
 
