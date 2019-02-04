@@ -174,7 +174,7 @@ func (daq *OpenDAQ) adcToVolts(raw int) float32 {
 	return daq.Adc.ToVolts(raw, daq.gainId, cal1, cal2)
 }
 
-func (daq *OpenDAQ) GetInfo() (model, version uint8, serial uint32, err error) {
+func (daq *OpenDAQ) GetInfo() (model, version uint8, serial string, err error) {
 	var buf io.Reader
 	buf, err = daq.sendCommand(&Message{Number: 39}, 6)
 	if err != nil {
@@ -191,7 +191,7 @@ func (daq *OpenDAQ) GetInfo() (model, version uint8, serial uint32, err error) {
 	if (model >= ModelEM08ABBRId){
 		serial = fmt.Sprintf("8%02d%04d", model, info.Serial)
 	} else {
-		serial = info.Serial
+		serial = fmt.Sprintf("%04d", info.Serial)
 	}
 	return
 }
