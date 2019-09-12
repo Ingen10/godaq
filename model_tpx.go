@@ -131,14 +131,14 @@ func newModelEM08LLLL() *ModelTPX {
 	}}
 }
 
-// LLAR model has 4 current outputs, 2 relays, 2 static/tacho inputs
+// LLAR model has 4 current outputs, 2 relays, 2 static inputs
 // In this case, Dac.VMin and Dac.VMax represent output values in mA
 func newModelEM08LLAR() *ModelTPX {
 	nInputs := uint(2)
 	nOutputs := uint(4)
 	return &ModelTPX{HwFeatures{
 		Name:       "EM08C-LLAR",
-		NLeds:      0,
+		NLeds:      nInputs,
 		NPIOs:      2,
 		NInputs:    nInputs,
 		NOutputs:   nOutputs,
