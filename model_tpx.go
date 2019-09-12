@@ -144,6 +144,7 @@ func newModelEM08LLAR() *ModelTPX {
 		NOutputs:   nOutputs,
 		NCalibRegs: uint(nOutputs + 2*nInputs),
 
+		Adc: ADC{Bits: 16, Signed: true, VMin: -24.0, VMax: 24.0, Gains: adcGainsTPX},
 		Dac: DAC{Bits: 16, Signed: true, VMin: 0, VMax: 40.96},
 	}}
 }
