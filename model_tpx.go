@@ -14,12 +14,14 @@
 package godaq
 
 const (
-	ModelEM08ABBRId = 10
-	ModelTP04ARId   = 11
-	ModelTP04ABId   = 12
-	ModelEM08RRLLId = 13
-	ModelEM08LLLBId = 14
-	ModelEM08LLLLId = 15
+	ModelEM08ABBRId  = 10
+	ModelTP04ARId    = 11
+	ModelTP04ABId    = 12
+	ModelEM08RRLLId  = 13
+	ModelEM08LLLBId  = 14
+	ModelEM08LLLLId  = 15
+	ModelEM08LLARId  = 16
+	ModelEM08ABRR2Id = 17
 )
 
 var adcGainsTPX = []float32{1, 2, 4, 5, 8, 10, 16, 32}
@@ -129,6 +131,42 @@ func newModelEM08LLLL() *ModelTPX {
 	}}
 }
 
+// LLAR model has 4 current outputs, 2 relays, 2 static/tacho inputs
+// In this case, Dac.VMin and Dac.VMax represent output values in mA
+func newModelEM08LLAR() *ModelTPX {
+	nInputs := uint(2)
+	nOutputs := uint(4)
+	return &ModelTPX{HwFeatures{
+		Name:       "EM08C-LLAR",
+		NLeds:      0,
+		NPIOs:      2,
+		NInputs:    nInputs,
+		NOutputs:   nOutputs,
+		NCalibRegs: uint(nOutputs + 2*nInputs),
+
+		Dac: DAC{Bits: 16, Signed: true, VMin: 0, VMax: 40.96},
+	}}
+}
+
+// ABRR2 model has 2 static/tacho inputs, 2 static inputs and 4 relays.
+// New version of ABRR with shunt resistors for loop current
+func newModelEM08ABRR2() *ModelTPX {
+	nInputs := uint(4)
+	nOutputs := uint(2) // internal tacho bias DAC references
+	return &ModelTPX{HwFeatures{
+		Name:           "EM08S-ABRR",
+		NLeds:          nInputs,
+		NPIOs:          4,
+		NInputs:        nInputs,
+		NHiddenOutputs: nOutputs,
+		NCalibRegs:     uint(nOutputs + 2*nInputs),
+
+		Adc: ADC{Bits: 16, Signed: true, VMin: -24.0, VMax: 24.0, Gains: adcGainsTPX},
+		Dac: DAC{Bits: 16, Signed: true, VMin: -24.0, VMax: 24.0},
+	}}
+}
+
+
 func (m *ModelTPX) GetFeatures() HwFeatures {
 	return m.HwFeatures
 }
@@ -168,4 +206,6 @@ func init() {
 	registerModel(ModelEM08RRLLId, newModelEM08RRLL())
 	registerModel(ModelEM08LLLBId, newModelEM08LLLB())
 	registerModel(ModelEM08LLLLId, newModelEM08LLLL())
+	registerModel(ModelEM08LLARId, newModelEM08LLAR())
+	registerModel(ModelEM08ABRR2Id, newModelEM08ABRR2())
 }
