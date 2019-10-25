@@ -1,6 +1,7 @@
 package godaq
 
-import "errors"
+import ("errors"
+		"math")
 
 const (
 	OutputMId  = 1
@@ -81,6 +82,10 @@ func newOutputL() *OutputBase {
 
 func (ot *OutputBase) GetFeatures() OutputFeatures {
 	return ot.OutputFeatures
+}
+
+func roundInt(f float32) int {
+	return int(math.Floor(float64(f) + .5))
 }
 // Return the range of an integer given the number of bits
 func (ot *OutputBase) bitRange() (int, int) {
