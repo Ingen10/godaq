@@ -48,31 +48,6 @@ type Calib struct {
 	Offset float32 // Offset calibraton in ADUs
 }
 
-type HwFeatures struct {
-	Name                              string
-	NPIOs, NLeds                      uint
-	NInputs, NOutputs, NHiddenOutputs uint
-	NCalibRegs                        uint
-	Dac                               DAC
-	Adc                               ADC
-}
-
-type HwModel interface {
-	GetFeatures() HwFeatures
-	GetCalibIndex(isOutput, diffMode, secondStage bool, n, gainId uint) (uint, error)
-	CheckValidInputs(pos, neg uint) error
-}
-
-var hwModels = make(map[uint8]HwModel)
-
-func registerModel(model uint8, hw HwModel) error {
-	if _, exists := hwModels[model]; exists {
-		return errors.New("Hardware model already registered!")
-	}
-	hwModels[model] = hw
-	return nil
-}
-
 func boolToByte(val bool) byte {
 	if val {
 		return 1
@@ -163,7 +138,7 @@ func (daq *OpenDAQ) GetCalib(isOutput, diffMode, secondStage bool, n, gainId uin
 func (daq *OpenDAQ) voltsToDac(v float32, n uint) int {
 	// TODO: add caching?
 	cal := daq.GetCalib(true, false, false, n, 0)
-	return daq.Dac.FromVolts(v, cal)
+	return daq.getOutput(n).FromVolts(v, cal)
 }
 
 // Convert an ADC value to volts
@@ -171,7 +146,7 @@ func (daq *OpenDAQ) adcToVolts(raw int) float32 {
 	// TODO: add caching?
 	cal1 := daq.GetCalib(false, daq.diffMode, false, daq.posInput, daq.gainId)
 	cal2 := daq.GetCalib(false, daq.diffMode, true, daq.posInput, daq.gainId)
-	return daq.Adc.ToVolts(raw, daq.gainId, cal1, cal2)
+	return daq.getInput(daq.posInput).RawToUnits(raw, daq.gainId, cal1, cal2)
 }
 
 func (daq *OpenDAQ) GetInfo() (model, version uint8, serial string, err error) {
@@ -226,11 +201,47 @@ func (daq *OpenDAQ) SetLED(n uint, c Color) error {
 	return err
 }
 
+func (daq *OpenDAQ) getInputGains(pos uint) []float32{
+	adc := daq.hw.GetFeatures().AdcTypes[pos-1]
+	return Inputtypes[uint8(adc)].GetFeatures().gains
+}
+
+func (daq *OpenDAQ) getInputModes(pos uint) []uint{
+	adc := daq.hw.GetFeatures().AdcTypes[pos-1]
+	return Inputtypes[uint8(adc)].GetFeatures().inputmodes
+}
+
+func (daq *OpenDAQ) getInput(pos uint) InputModel{
+	adc := daq.hw.GetFeatures().AdcTypes[pos-1]
+	return Inputtypes[uint8(adc)]
+}
+
+func (daq *OpenDAQ) getOutput(pos uint) OutputModel{
+	adc := daq.hw.GetFeatures().DacTypes[pos -1]
+	return Outputtypes[uint8(adc)]
+}
+
+func (daq *OpenDAQ) CheckValidInputs(pos, neg uint) error{
+	adctypes := daq.hw.GetFeatures().AdcTypes
+	if pos < 1 || pos > uint(len(adctypes)) {
+		return ErrInvalidInput
+	}
+	if!(UintInSlice(neg, daq.getInputModes(pos))) {
+		return ErrInvalidInput
+	}
+	if daq.hw.GetFeatures().Name == "OpenDAQ M" {
+		if neg != 0 && neg != 25 && (neg < 5 || neg > 8) {
+			return ErrInvalidInput
+		}
+	}
+	return nil
+}
+
 func (daq *OpenDAQ) ConfigureADC(posInput, negInput, gainId uint, nSamples uint8) error {
-	if err := daq.hw.CheckValidInputs(posInput, negInput); err != nil {
+	if err := daq.CheckValidInputs(posInput, negInput); err != nil {
 		return err
 	}
-	if gainId >= uint(len(daq.Adc.Gains)) {
+	if gainId >= uint(len(daq.getInputGains(posInput))) {
 		return ErrInvalidGainID
 	}
 	daq.posInput = posInput

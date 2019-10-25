@@ -60,3 +60,12 @@ func ListDevicePorts() ([]DevicePort, error) {
 	}
 	return list, nil
 }
+
+func UintInSlice(a uint, list []uint) bool {
+    for _, b := range list {
+        if b == a {
+            return true
+        }
+    }
+    return false
+}
