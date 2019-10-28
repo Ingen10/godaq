@@ -64,7 +64,7 @@ func newInputA() *InputBase {
 
 func newInputAS() *InputAS {
 	return &InputAS{InputFeatures{
-		type_str:   "INP_TYPE_AS",
+		type_str:   "INPUT_TYPE_AS",
 		bits:		16,
 		vmin:		-24,
 		vmax:		24,
@@ -116,7 +116,7 @@ func newInputP() *InputP {
 		vmin:		-24,
 		vmax:		24,
 		gains:		[]float32{1, 2, 4, 5, 8, 10, 16, 32},
-		inputmodes: []uint{0}, //MIRAR COMO PONER RANGE
+		inputmodes: []uint{0},
 		unit:		[]string{"ohm"},
 		signed:     true}}
 }

@@ -44,45 +44,25 @@ type ModelBase struct {
 	HwFeatures
 }
 
-func newModelM() *ModelBase {
-	nInputs := uint(8)
-	nOutputs := uint(1)
-	gains := Inputtypes[InputMId].GetFeatures().gains
-
-	return &ModelBase{HwFeatures{
-		Name:       "OpenDAQ M",
-		NLeds:      1,
-		NPIOs:      6,
-		NInputs:    nInputs,
-		NOutputs:   nOutputs,
-		NCalibRegs: nOutputs + nInputs + uint(len(gains)),
-		DacTypes:   []uint{OutputMId},
-		AdcTypes:   []uint{InputMId, InputMId, InputMId, InputMId, InputMId, InputMId, InputMId, InputMId}}}
-}
-
 func (m *ModelBase) GetFeatures() HwFeatures {
 	return m.HwFeatures
 }
 
 func (m *ModelBase) GetCalibIndex(isOutput, diffMode, secondStage bool, n, gainId, modeInput uint) (uint, error) {
-	input_id := uint8(m.GetFeatures().AdcTypes[0])
-	gains := Inputtypes[input_id].GetFeatures().gains
 	if isOutput {
-		if n < 1 || n > m.NOutputs {
+		if n < 1 || n > (m.NOutputs+m.NHiddenOutputs) {
 			return 0, ErrInvalidOutput
 		}
 		return n - 1, nil
 	}
-	if secondStage {
-		if gainId >= uint(len(gains)) {
-			return 0, ErrInvalidGainID
-		}
-		return m.NOutputs + m.NInputs + gainId, nil
-	}
 	if n < 1 || n > m.NInputs {
 		return 0, ErrInvalidInput
 	}
-	return m.NOutputs + n - 1, nil
+
+	if secondStage {
+		return m.NOutputs + m.NHiddenOutputs + m.NInputs + n - 1, nil
+	}
+	return m.NOutputs + m.NHiddenOutputs + n - 1, nil
 }
 // OPENDAQ-S MODEL
 func newModelS() *ModelBase {
@@ -185,6 +165,7 @@ func newModelEM08LLLB() *ModelBase {
 		DacTypes:   []uint{OutputLId, OutputLId, OutputLId, OutputLId, OutputLId, OutputLId},
 		AdcTypes:   []uint{InputAId, InputAId}}}
 }
+
 // LLLL model has 8 current outputs
 // In this case, Dac.VMin and Dac.VMax represent output values in mA
 func newModelEM08LLLL() *ModelBase {
@@ -197,6 +178,51 @@ func newModelEM08LLLL() *ModelBase {
 		NOutputs:   nOutputs,
 		NCalibRegs: nOutputs,
 		DacTypes:   []uint{OutputLId, OutputLId, OutputLId, OutputLId, OutputLId, OutputLId, OutputLId, OutputLId}}}
+}
+// LLAR model has 4 current outputs, 2 relays, 2 static inputs
+// In this case, Dac.VMin and Dac.VMax represent output values in mA
+type ModelM struct {
+	HwFeatures
+}
+func newModelM() *ModelM {
+	nInputs := uint(8)
+	nOutputs := uint(1)
+	gains := Inputtypes[InputMId].GetFeatures().gains
+
+	return &ModelM{HwFeatures{
+		Name:       "OpenDAQ M",
+		NLeds:      1,
+		NPIOs:      6,
+		NInputs:    nInputs,
+		NOutputs:   nOutputs,
+		NCalibRegs: nOutputs + nInputs + uint(len(gains)),
+		DacTypes:   []uint{OutputMId},
+		AdcTypes:   []uint{InputMId, InputMId, InputMId, InputMId, InputMId, InputMId, InputMId, InputMId}}}
+}
+
+func (m *ModelM) GetFeatures() HwFeatures {
+	return m.HwFeatures
+}
+
+func (m *ModelM) GetCalibIndex(isOutput, diffMode, secondStage bool, n, gainId, modeInput uint) (uint, error) {
+	input_id := uint8(m.GetFeatures().AdcTypes[0])
+	gains := Inputtypes[input_id].GetFeatures().gains
+	if isOutput {
+		if n < 1 || n > m.NOutputs {
+			return 0, ErrInvalidOutput
+		}
+		return n - 1, nil
+	}
+	if secondStage {
+		if gainId >= uint(len(gains)) {
+			return 0, ErrInvalidGainID
+		}
+		return m.NOutputs + m.NInputs + gainId, nil
+	}
+	if n < 1 || n > m.NInputs {
+		return 0, ErrInvalidInput
+	}
+	return m.NOutputs + n - 1, nil
 }
 // LLAR model has 4 current outputs, 2 relays, 2 static inputs
 // In this case, Dac.VMin and Dac.VMax represent output values in mA
