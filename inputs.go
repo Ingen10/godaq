@@ -36,7 +36,7 @@ type InputP struct {
 }
 
 type InputModel interface {
-	RawToUnits(raw int, gainId uint, cal1, cal2 Calib) float32
+	RawToUnits(raw int, gainId, modeInput uint, cal1, cal2 Calib) (float32, string)
 	GetFeatures() InputFeatures
 }
 
@@ -125,7 +125,7 @@ func (it *InputBase) GetFeatures() InputFeatures {
 	return it.InputFeatures
 }
 
-func (it *InputBase) RawToUnits(raw int, gainId uint, cal1, cal2 Calib) float32 {
+func (it *InputBase) RawToUnits(raw int, gainId, modeInput uint, cal1, cal2 Calib) (float32, string) {
 	input_feat := it.GetFeatures()
 	baseOffs := 0
 	if !input_feat.signed {
@@ -140,16 +140,16 @@ func (it *InputBase) RawToUnits(raw int, gainId uint, cal1, cal2 Calib) float32 
 
 	v := (float32(raw-baseOffs) - offset) / gain
 	if input_feat.invert {
-		return -v
+		return -v, input_feat.unit[modeInput]
 	}
-	return v
+	return v, input_feat.unit[modeInput]
 }
 
 func (it *InputAS) GetFeatures() InputFeatures {
 	return it.InputFeatures
 }
 
-func (it *InputAS) RawToUnits(raw int, gainId uint, cal1, cal2 Calib) float32 {
+func (it *InputAS) RawToUnits(raw int, gainId, modeInput uint, cal1, cal2 Calib) (float32, string) {
 	input_feat := it.GetFeatures()
 	baseOffs := 0
 	if !input_feat.signed {
@@ -164,16 +164,19 @@ func (it *InputAS) RawToUnits(raw int, gainId uint, cal1, cal2 Calib) float32 {
 
 	v := (float32(raw-baseOffs) - offset) / gain
 	if input_feat.invert {
-		return -v
+		return -v, input_feat.unit[modeInput]
 	}
-	return v
+	if modeInput == 1 {
+		v *= 10
+	}
+	return v, input_feat.unit[modeInput]
 }
 
 func (it *InputP) GetFeatures() InputFeatures {
 	return it.InputFeatures
 }
 
-func (it *InputP) RawToUnits(raw int, gainId uint, cal1, cal2 Calib) float32 {
+func (it *InputP) RawToUnits(raw int, gainId, modeInput uint, cal1, cal2 Calib) (float32, string) {
 	input_feat := it.GetFeatures()
 	baseOffs := 0
 	if !input_feat.signed {
@@ -188,9 +191,9 @@ func (it *InputP) RawToUnits(raw int, gainId uint, cal1, cal2 Calib) float32 {
 
 	v := (float32(raw-baseOffs) - offset) / gain
 	if input_feat.invert {
-		return -v
+		return -v, input_feat.unit[modeInput]
 	}
-	return v
+	return v, input_feat.unit[modeInput]
 }
 
 func init() {

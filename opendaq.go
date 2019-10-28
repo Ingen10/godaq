@@ -63,15 +63,17 @@ type OpenDAQ struct {
 	sync.Mutex
 
 	// Input state (needed for converting ADC values to volts)
-	gainId   uint
-	posInput uint
-	diffMode bool
+	gainId    uint
+	posInput  uint
+	modeInput uint
+	diffMode  bool
 }
 
 func New(port string) (*OpenDAQ, error) {
 	var err error
 	daq := OpenDAQ{}
 	daq.posInput = 1 // 0 is not a valid default for posInput
+	daq.modeInput = 0
 
 	// Setup and open the serial port
 	serCfg := &serial.Config{Name: port, Baud: 115200, ReadTimeout: time.Millisecond * 100}
@@ -126,8 +128,8 @@ func (daq *OpenDAQ) sendCommand(command *Message, respLen int) (r io.Reader, err
 // Return the calibration values for a given input or output.
 // The gain ID and the input mode (single-ended or differential) are needed.
 // Different device models use different calibration schemas.
-func (daq *OpenDAQ) GetCalib(isOutput, diffMode, secondStage bool, n, gainId uint) Calib {
-	idx, err := daq.hw.GetCalibIndex(isOutput, diffMode, secondStage, n, gainId)
+func (daq *OpenDAQ) GetCalib(isOutput, diffMode, secondStage bool, n, gainId, modeInput uint) Calib {
+	idx, err := daq.hw.GetCalibIndex(isOutput, diffMode, secondStage, n, gainId, modeInput)
 	if err != nil {
 		return Calib{1, 0}
 	}
@@ -137,16 +139,16 @@ func (daq *OpenDAQ) GetCalib(isOutput, diffMode, secondStage bool, n, gainId uin
 // Convert a voltage to a DAC value given the number of the output
 func (daq *OpenDAQ) voltsToDac(v float32, n uint) int {
 	// TODO: add caching?
-	cal := daq.GetCalib(true, false, false, n, 0)
+	cal := daq.GetCalib(true, false, false, n, 0, 0)
 	return daq.getOutput(n).FromVolts(v, cal)
 }
 
 // Convert an ADC value to volts
-func (daq *OpenDAQ) adcToVolts(raw int) float32 {
+func (daq *OpenDAQ) adcToVolts(raw int) (float32, string) {
 	// TODO: add caching?
-	cal1 := daq.GetCalib(false, daq.diffMode, false, daq.posInput, daq.gainId)
-	cal2 := daq.GetCalib(false, daq.diffMode, true, daq.posInput, daq.gainId)
-	return daq.getInput(daq.posInput).RawToUnits(raw, daq.gainId, cal1, cal2)
+	cal1 := daq.GetCalib(false, daq.diffMode, false, daq.posInput, daq.gainId, daq.modeInput)
+	cal2 := daq.GetCalib(false, daq.diffMode, true, daq.posInput, daq.gainId, daq.modeInput)
+	return daq.getInput(daq.posInput).RawToUnits(raw, daq.gainId, daq.modeInput, cal1, cal2)
 }
 
 func (daq *OpenDAQ) GetInfo() (model, version uint8, serial string, err error) {
@@ -247,6 +249,7 @@ func (daq *OpenDAQ) ConfigureADC(posInput, negInput, gainId uint, nSamples uint8
 	daq.posInput = posInput
 	daq.gainId = gainId
 	daq.diffMode = false
+	daq.modeInput = negInput
 	if negInput != 0 {
 		daq.diffMode = true
 	}
@@ -267,12 +270,13 @@ func (daq *OpenDAQ) ReadADC() (int16, error) {
 }
 
 // Read a value in volts from the ADC
-func (daq *OpenDAQ) ReadAnalog() (float32, error) {
+func (daq *OpenDAQ) ReadAnalog() (float32, string, error) {
 	val, err := daq.ReadADC()
 	if err != nil {
-		return 0, err
+		return 0, "", err
 	}
-	return daq.adcToVolts(int(val)), nil
+	read, units := daq.adcToVolts(int(val))
+	return read, units, nil
 }
 
 // Set the raw value of the DAC at output n

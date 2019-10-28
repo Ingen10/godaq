@@ -27,8 +27,7 @@ type HwFeatures struct {
 
 type HwModel interface {
 	GetFeatures() HwFeatures
-	GetCalibIndex(isOutput, diffMode, secondStage bool, n, gainId uint) (uint, error)
-	//CheckValidInputs(pos, neg uint) error
+	GetCalibIndex(isOutput, diffMode, secondStage bool, n, gainId, modeInput uint) (uint, error)
 }
 
 var hwModels = make(map[uint8]HwModel)
@@ -65,7 +64,7 @@ func (m *ModelBase) GetFeatures() HwFeatures {
 	return m.HwFeatures
 }
 
-func (m *ModelBase) GetCalibIndex(isOutput, diffMode, secondStage bool, n, gainId uint) (uint, error) {
+func (m *ModelBase) GetCalibIndex(isOutput, diffMode, secondStage bool, n, gainId, modeInput uint) (uint, error) {
 	input_id := uint8(m.GetFeatures().AdcTypes[0])
 	gains := Inputtypes[input_id].GetFeatures().gains
 	if isOutput {
@@ -223,7 +222,7 @@ func (m *ModelEM08LLAR) GetFeatures() HwFeatures {
 	return m.HwFeatures
 }
 
-func (m *ModelEM08LLAR) GetCalibIndex(isOutput, diffMode, secondStage bool, n, gainId uint) (uint, error) {
+func (m *ModelEM08LLAR) GetCalibIndex(isOutput, diffMode, secondStage bool, n, gainId, modeInput uint) (uint, error) {
 	if isOutput {
 		if n < 1 || n > (m.NOutputs+m.NHiddenOutputs) {
 			return 0, ErrInvalidOutput
@@ -236,7 +235,7 @@ func (m *ModelEM08LLAR) GetCalibIndex(isOutput, diffMode, secondStage bool, n, g
 	if secondStage {
 		return m.NOutputs + m.NHiddenOutputs + m.NInputs + n - 1, nil
 	}
-	return m.NOutputs + m.NHiddenOutputs + n - 1, nil
+	return m.NOutputs + m.NHiddenOutputs + n - 1 + 2 * m.NInputs * modeInput, nil
 }
 // ABRR2 model has 2 static/tacho inputs, 2 static inputs and 4 relays.
 // new version of ABRR with shunt resistors for loop current
@@ -261,7 +260,7 @@ func (m *ModelEM08ABRR2) GetFeatures() HwFeatures {
 	return m.HwFeatures
 }
 
-func (m *ModelEM08ABRR2) GetCalibIndex(isOutput, diffMode, secondStage bool, n, gainId uint) (uint, error) {
+func (m *ModelEM08ABRR2) GetCalibIndex(isOutput, diffMode, secondStage bool, n, gainId, modeInput uint) (uint, error) {
 	if isOutput {
 		if n < 1 || n > (m.NOutputs+m.NHiddenOutputs) {
 			return 0, ErrInvalidOutput
@@ -274,7 +273,7 @@ func (m *ModelEM08ABRR2) GetCalibIndex(isOutput, diffMode, secondStage bool, n, 
 	if secondStage {
 		return m.NOutputs + m.NHiddenOutputs + m.NInputs + n - 1, nil
 	}
-	return m.NOutputs + m.NHiddenOutputs + n - 1, nil
+	return m.NOutputs + m.NHiddenOutputs + n - 1 + 2 * m.NInputs * modeInput, nil
 }
 
 func init() {
