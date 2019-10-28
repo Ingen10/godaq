@@ -12,8 +12,9 @@ const (
 	ModelEM08RRLLId  = 13
 	ModelEM08LLLBId  = 14
 	ModelEM08LLLLId  = 15
-	ModelEM08LLARId  = 16
-	ModelEM08ABRR2Id = 17
+	ModelEM08ABPRId  = 16
+	ModelEM08LLARId  = 17
+	ModelEM08ABRR2Id = 18
 )
 
 type HwFeatures struct {
@@ -43,11 +44,16 @@ func registerModel(model uint8, hw HwModel) error {
 type ModelBase struct {
 	HwFeatures
 }
-
+// GetFeatures returns the model features struct.
 func (m *ModelBase) GetFeatures() HwFeatures {
 	return m.HwFeatures
 }
-
+// GetCalibIndex gets the index of a calibration register.
+// Each register contains a pair of calibration values: a gain and and offset.
+// isOutput: Obtain the calibration values of an output
+// diffMode: Some models have different calibration values depending on the input mode (single-ended or differential)
+// secondStage: The inputs with a PGA need two calibration registers. One is applied before the PGA and the other
+// is applied after the PGA (second stage)
 func (m *ModelBase) GetCalibIndex(isOutput, diffMode, secondStage bool, n, gainId, modeInput uint) (uint, error) {
 	if isOutput {
 		if n < 1 || n > (m.NOutputs+m.NHiddenOutputs) {
@@ -199,11 +205,16 @@ func newModelM() *ModelM {
 		DacTypes:   []uint{OutputMId},
 		AdcTypes:   []uint{InputMId, InputMId, InputMId, InputMId, InputMId, InputMId, InputMId, InputMId}}}
 }
-
+// GetFeatures returns the model features struct.
 func (m *ModelM) GetFeatures() HwFeatures {
 	return m.HwFeatures
 }
-
+// GetCalibIndex gets the index of a calibration register.
+// Each register contains a pair of calibration values: a gain and and offset.
+// isOutput: Obtain the calibration values of an output
+// diffMode: Some models have different calibration values depending on the input mode (single-ended or differential)
+// secondStage: The inputs with a PGA need two calibration registers. One is applied before the PGA and the other
+// is applied after the PGA (second stage)
 func (m *ModelM) GetCalibIndex(isOutput, diffMode, secondStage bool, n, gainId, modeInput uint) (uint, error) {
 	input_id := uint8(m.GetFeatures().AdcTypes[0])
 	gains := Inputtypes[input_id].GetFeatures().gains
@@ -243,11 +254,16 @@ func newModelEM08LLAR() *ModelEM08LLAR {
 		DacTypes:   []uint{OutputLId, OutputLId, OutputLId, OutputLId},
 		AdcTypes:   []uint{InputASId, InputASId}}}
 }
-
+// GetFeatures returns the model features struct.
 func (m *ModelEM08LLAR) GetFeatures() HwFeatures {
 	return m.HwFeatures
 }
-
+// GetCalibIndex gets the index of a calibration register.
+// Each register contains a pair of calibration values: a gain and and offset.
+// isOutput: Obtain the calibration values of an output
+// diffMode: Some models have different calibration values depending on the input mode (single-ended or differential)
+// secondStage: The inputs with a PGA need two calibration registers. One is applied before the PGA and the other
+// is applied after the PGA (second stage)
 func (m *ModelEM08LLAR) GetCalibIndex(isOutput, diffMode, secondStage bool, n, gainId, modeInput uint) (uint, error) {
 	if isOutput {
 		if n < 1 || n > (m.NOutputs+m.NHiddenOutputs) {
@@ -281,11 +297,16 @@ func newModelEM08ABRR2() *ModelEM08ABRR2 {
 		DacTypes:   	[]uint{OutputTId, OutputTId},
 		AdcTypes:   	[]uint{InputASId, InputASId, InputASId, InputASId}}}
 }
-
+// GetFeatures returns the model features struct.
 func (m *ModelEM08ABRR2) GetFeatures() HwFeatures {
 	return m.HwFeatures
 }
-
+// GetCalibIndex gets the index of a calibration register.
+// Each register contains a pair of calibration values: a gain and and offset.
+// isOutput: Obtain the calibration values of an output
+// diffMode: Some models have different calibration values depending on the input mode (single-ended or differential)
+// secondStage: The inputs with a PGA need two calibration registers. One is applied before the PGA and the other
+// is applied after the PGA (second stage)
 func (m *ModelEM08ABRR2) GetCalibIndex(isOutput, diffMode, secondStage bool, n, gainId, modeInput uint) (uint, error) {
 	if isOutput {
 		if n < 1 || n > (m.NOutputs+m.NHiddenOutputs) {

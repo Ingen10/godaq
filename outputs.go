@@ -79,15 +79,14 @@ func newOutputL() *OutputBase {
 		unit:		"mA",
 		signed:     true}}
 }
-
+// GetFeatures returns the output features struct.
 func (ot *OutputBase) GetFeatures() OutputFeatures {
 	return ot.OutputFeatures
 }
-
 func roundInt(f float32) int {
 	return int(math.Floor(float64(f) + .5))
 }
-// Return the range of an integer given the number of bits
+// bitRange returns the range of an integer given the number of bits
 func (ot *OutputBase) bitRange() (int, int) {
 	out_feat := ot.GetFeatures()
 	if out_feat.signed {
@@ -95,8 +94,7 @@ func (ot *OutputBase) bitRange() (int, int) {
 	}
 	return 0, 1<<out_feat.bits - 1
 }
-
-// Limit an integer value within the representable range
+// clampValue limits an integer value within the representable range
 func (ot *OutputBase) clampValue(value int) int {
 	lower, upper := ot.bitRange()
 	if value < lower {
@@ -106,8 +104,7 @@ func (ot *OutputBase) clampValue(value int) int {
 	}
 	return value
 }
-
-// Convert a voltage to a DAC value
+// FromVolts converts a voltage to a DAC value
 func (ot *OutputBase) FromVolts(v float32, cal Calib) int {
 	out_feat := ot.GetFeatures()
 	min, max := ot.bitRange()

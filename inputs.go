@@ -120,11 +120,15 @@ func newInputP() *InputP {
 		unit:		[]string{"ohm"},
 		signed:     true}}
 }
-
+// GetFeatures returns the input features struct.
 func (it *InputBase) GetFeatures() InputFeatures {
 	return it.InputFeatures
 }
-
+// RawToUnits Converts an ADC value to a specific unit
+// gainId: Gain index
+// modeInput: Inpuct lecture mode (0: V)
+// cal1: pre-PGA calibration values
+// cal2: post-PGA calibration values
 func (it *InputBase) RawToUnits(raw int, gainId, modeInput uint, cal1, cal2 Calib) (float32, string) {
 	input_feat := it.GetFeatures()
 	baseOffs := 0
@@ -144,11 +148,15 @@ func (it *InputBase) RawToUnits(raw int, gainId, modeInput uint, cal1, cal2 Cali
 	}
 	return v, input_feat.unit[modeInput]
 }
-
+// GetFeatures returns the input features struct.
 func (it *InputAS) GetFeatures() InputFeatures {
 	return it.InputFeatures
 }
-
+// RawToUnits Converts an ADC value to a specific unit
+// gainId: Gain index
+// modeInput: Inpuct lecture mode (0: V, 1: mA)
+// cal1: pre-PGA calibration values
+// cal2: post-PGA calibration values
 func (it *InputAS) RawToUnits(raw int, gainId, modeInput uint, cal1, cal2 Calib) (float32, string) {
 	input_feat := it.GetFeatures()
 	baseOffs := 0
@@ -171,11 +179,15 @@ func (it *InputAS) RawToUnits(raw int, gainId, modeInput uint, cal1, cal2 Calib)
 	}
 	return v, input_feat.unit[modeInput]
 }
-
+// GetFeatures returns the input features struct.
 func (it *InputP) GetFeatures() InputFeatures {
 	return it.InputFeatures
 }
-
+// RawToUnits Converts an ADC value to a specific unit
+// gainId: Gain index
+// modeInput: Inpuct lecture mode (0: ohmnios)
+// cal1: pre-PGA calibration values
+// cal2: post-PGA calibration values
 func (it *InputP) RawToUnits(raw int, gainId, modeInput uint, cal1, cal2 Calib) (float32, string) {
 	input_feat := it.GetFeatures()
 	baseOffs := 0
