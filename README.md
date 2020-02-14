@@ -47,9 +47,9 @@ func main() {
 	checkErr(err)
 	defer daq.Close()
 
-	info, err := daq.GetInfo()
+	model, version, serial, err := daq.GetInfo()
 	checkErr(err)
-	fmt.Println("model:", info.Model, "version:", info.Version)
+	fmt.Println("model:", model, "version:", version, "serial:", serial)
 
 	checkErr(daq.SetLED(1, godaq.RED))
 
