@@ -16,10 +16,10 @@ package godaq
 import (
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"io"
 	"sync"
 	"time"
-	"fmt"
 
 	"github.com/tarm/serial"
 	try "gopkg.in/matryer/try.v1"
@@ -34,13 +34,31 @@ const (
 	YELLOW
 )
 
+const (
+	AIN         = 1
+	AIN_CFG     = 2
+	PIO         = 3
+	AIN_ALL     = 4
+	PIO_DIR     = 5
+	PORT        = 7
+	PORT_DIR    = 9
+	SET_DAC     = 13
+	LED_W       = 18
+	SET_ANALOG  = 24
+	GET_CALIB   = 36
+	ID_CONFIG   = 39
+	GET_AIN_CFG = 40
+)
+
 var (
-	ErrUnknownModel  = errors.New("Unknown device model number")
-	ErrInvalidLed    = errors.New("Invalid LED number")
-	ErrInvalidInput  = errors.New("Invalid input number")
-	ErrInvalidOutput = errors.New("Invalid output number")
-	ErrInvalidPIO    = errors.New("Invalid PIO number")
-	ErrInvalidGainID = errors.New("Invalid gain ID")
+	ErrUnknownModel    = errors.New("Unknown device model number")
+	ErrInvalidLed      = errors.New("Invalid LED number")
+	ErrInvalidInput    = errors.New("Invalid input number")
+	ErrInvalidOutput   = errors.New("Invalid output number")
+	ErrInvalidPIO      = errors.New("Invalid PIO number")
+	ErrInvalidGainID   = errors.New("Invalid gain ID")
+	ErrInvalidID       = errors.New("ID out of range")
+	ErrInvalidPIOValue = errors.New("Invalid PIO value")
 )
 
 type Calib struct {
@@ -176,7 +194,7 @@ func (daq *OpenDAQ) adcToVolts(raw int) float32 {
 
 func (daq *OpenDAQ) GetInfo() (model, version uint8, serial string, err error) {
 	var buf io.Reader
-	buf, err = daq.sendCommand(&Message{Number: 39}, 6)
+	buf, err = daq.sendCommand(&Message{Number: ID_CONFIG}, 6)
 	if err != nil {
 		return
 	}
@@ -187,18 +205,13 @@ func (daq *OpenDAQ) GetInfo() (model, version uint8, serial string, err error) {
 	binary.Read(buf, binary.BigEndian, &info)
 	model = info.Model
 	version = info.Version
-
-	if (model >= ModelEM08ABBRId){
-		serial = fmt.Sprintf("8%02d%04d", model, info.Serial)
-	} else {
-		serial = fmt.Sprintf("%04d", info.Serial)
-	}
+	serial = fmt.Sprintf("%04d", info.Serial)
 	return
 }
 
 // Read the calibration register stored at index nReg
 func (daq *OpenDAQ) readCalib(nReg uint8) (Calib, error) {
-	buf, err := daq.sendCommand(&Message{36, []byte{nReg}}, 5)
+	buf, err := daq.sendCommand(&Message{GET_CALIB, []byte{nReg}}, 5)
 	if err != nil {
 		return Calib{1, 0}, err
 	}
@@ -222,7 +235,7 @@ func (daq *OpenDAQ) SetLED(n uint, c Color) error {
 	if c > 3 {
 		return errors.New("Invalid LED color")
 	}
-	_, err := daq.sendCommand(&Message{18, []byte{byte(c), byte(n)}}, 2)
+	_, err := daq.sendCommand(&Message{LED_W, []byte{byte(c), byte(n)}}, 2)
 	return err
 }
 
@@ -239,14 +252,14 @@ func (daq *OpenDAQ) ConfigureADC(posInput, negInput, gainId uint, nSamples uint8
 	if negInput != 0 {
 		daq.diffMode = true
 	}
-	_, err := daq.sendCommand(&Message{2, []byte{byte(posInput), byte(negInput),
+	_, err := daq.sendCommand(&Message{AIN_CFG, []byte{byte(posInput), byte(negInput),
 		byte(gainId), nSamples}}, 6)
 	return err
 }
 
 // Read a raw value from the ADC
 func (daq *OpenDAQ) ReadADC() (int16, error) {
-	buf, err := daq.sendCommand(&Message{Number: 1}, 2)
+	buf, err := daq.sendCommand(&Message{Number: AIN}, 2)
 	if err != nil {
 		return 0, err
 	}
@@ -271,7 +284,7 @@ func (daq *OpenDAQ) SetDAC(n uint, val int) error {
 	}
 	out := toBytes(int16(val))
 	out = append(out, byte(n))
-	_, err := daq.sendCommand(&Message{13, out}, 3)
+	_, err := daq.sendCommand(&Message{SET_DAC, out}, 3)
 	return err
 }
 
@@ -285,7 +298,7 @@ func (daq *OpenDAQ) SetPIO(n uint, value bool) error {
 		return ErrInvalidPIO
 	}
 	val := boolToByte(value)
-	_, err := daq.sendCommand(&Message{3, []byte{byte(n), val}}, 2)
+	_, err := daq.sendCommand(&Message{PIO, []byte{byte(n), val}}, 2)
 	return err
 }
 
@@ -294,6 +307,62 @@ func (daq *OpenDAQ) SetPIODir(n uint, out bool) error {
 		return ErrInvalidPIO
 	}
 	dir := boolToByte(out)
-	_, err := daq.sendCommand(&Message{5, []byte{byte(n), dir}}, 2)
+	_, err := daq.sendCommand(&Message{PIO_DIR, []byte{byte(n), dir}}, 2)
 	return err
+}
+
+func (daq *OpenDAQ) ReadPIO(n uint) (uint8, error) {
+	if n < 1 || n > daq.NPIOs {
+		return 0, ErrInvalidPIO
+	}
+	buf, err := daq.sendCommand(&Message{PIO, []byte{byte(n)}}, 2)
+	var ret = struct {
+		N_PIO uint8
+		Read  uint8
+	}{}
+	binary.Read(buf, binary.BigEndian, &ret)
+	return ret.Read, err
+}
+
+// Configure all PIO direction.
+func (daq *OpenDAQ) SetPortDir(dir_port uint8) error {
+	if dir_port < 0 || dir_port >= (1<<daq.NPIOs) {
+		return ErrInvalidPIOValue
+	} else {
+		_, err := daq.sendCommand(&Message{PORT_DIR, []byte{byte(dir_port)}}, 1)
+		return err
+	}
+}
+
+// ead all PIO values.
+func (daq *OpenDAQ) ReadPort() (uint8, error) {
+	var read_value uint8
+	buf, err := daq.sendCommand(&Message{Number: PORT}, 1)
+	binary.Read(buf, binary.BigEndian, &read_value)
+	return read_value, err
+}
+
+// Write all PIO values.
+func (daq *OpenDAQ) SetPort(value_port uint8) error {
+	if value_port < 0 || value_port >= (1<<daq.NPIOs) {
+		return ErrInvalidPIOValue
+	} else {
+		_, err := daq.sendCommand(&Message{PORT, []byte{byte(value_port)}}, 1)
+		return err
+	}
+}
+
+func (daq *OpenDAQ) SetId(id uint32) (uint16, error) {
+	if id < 0 || id > 1000 {
+		return 0, ErrInvalidID
+	}
+	var ret = struct {
+		HW   uint8
+		FW   uint8
+		RESP uint16
+	}{}
+	out := toBytes(int32(id))
+	buf, err := daq.sendCommand(&Message{ID_CONFIG, out}, 6)
+	binary.Read(buf, binary.BigEndian, &ret)
+	return ret.RESP, err
 }

@@ -65,14 +65,14 @@ func TestToVoltsSigned(t *testing.T) {
 	adc := ADC{Bits: 12, Signed: true, VMin: -4.096, VMax: 4.096, Gains: gains}
 
 	// gain x1
-	assert.Equal(t, -4.096, adc.ToVolts(-2048, 0, Calib{1, 0}, Calib{1, 0}))
-	assert.Equal(t, 0.0, adc.ToVolts(0, 0, Calib{1, 0}, Calib{1, 0}))
-	assert.Equal(t, 4.096, adc.ToVolts(2048, 0, Calib{1, 0}, Calib{1, 0}))
+	assert.Equal(t, float32(-4.096), adc.ToVolts(-2048, 0, Calib{1, 0}, Calib{1, 0}))
+	assert.Equal(t, float32(0.0), adc.ToVolts(0, 0, Calib{1, 0}, Calib{1, 0}))
+	assert.Equal(t, float32(4.096), adc.ToVolts(2048, 0, Calib{1, 0}, Calib{1, 0}))
 
 	// gain x4
-	assert.Equal(t, -1.024, adc.ToVolts(-2048, 2, Calib{1, 0}, Calib{1, 0}))
-	assert.Equal(t, 0.0, adc.ToVolts(0, 2, Calib{1, 0}, Calib{1, 0}))
-	assert.Equal(t, 1.024, adc.ToVolts(2048, 2, Calib{1, 0}, Calib{1, 0}))
+	assert.Equal(t, float32(-1.024), adc.ToVolts(-2048, 2, Calib{1, 0}, Calib{1, 0}))
+	assert.Equal(t, float32(0.0), adc.ToVolts(0, 2, Calib{1, 0}, Calib{1, 0}))
+	assert.Equal(t, float32(1.024), adc.ToVolts(2048, 2, Calib{1, 0}, Calib{1, 0}))
 }
 
 func TestToVoltsUnSigned(t *testing.T) {
@@ -80,12 +80,12 @@ func TestToVoltsUnSigned(t *testing.T) {
 	adc := ADC{Bits: 12, VMin: -4.096, VMax: 4.096, Gains: gains}
 
 	// gain x1
-	assert.Equal(t, -4.096, adc.ToVolts(0, 0, Calib{1, 0}, Calib{1, 0}))
-	assert.Equal(t, 0.0, adc.ToVolts(2048, 0, Calib{1, 0}, Calib{1, 0}))
-	assert.Equal(t, 4.096, adc.ToVolts(4096, 0, Calib{1, 0}, Calib{1, 0}))
+	assert.Equal(t, float32(-4.096), adc.ToVolts(0, 0, Calib{1, 0}, Calib{1, 0}))
+	assert.Equal(t, float32(0.0), adc.ToVolts(2048, 0, Calib{1, 0}, Calib{1, 0}))
+	assert.Equal(t, float32(4.096), adc.ToVolts(4096, 0, Calib{1, 0}, Calib{1, 0}))
 
 	// gain x4
-	assert.Equal(t, -1.024, adc.ToVolts(0, 2, Calib{1, 0}, Calib{1, 0}))
-	assert.Equal(t, 0.0, adc.ToVolts(2048, 2, Calib{1, 0}, Calib{1, 0}))
-	assert.Equal(t, 1.024, adc.ToVolts(4096, 2, Calib{1, 0}, Calib{1, 0}))
+	assert.Equal(t, float32(-1.024), adc.ToVolts(0, 2, Calib{1, 0}, Calib{1, 0}))
+	assert.Equal(t, float32(0.0), adc.ToVolts(2048, 2, Calib{1, 0}, Calib{1, 0}))
+	assert.Equal(t, float32(1.024), adc.ToVolts(4096, 2, Calib{1, 0}, Calib{1, 0}))
 }

@@ -14,37 +14,21 @@ func checkErr(err error) {
 	}
 }
 
-func testLeds(daq *godaq.OpenDAQ) {
-	for j := 0; j <= 20; j++ {
-		for color := godaq.OFF; color <= godaq.YELLOW; color++ {
-			for i := uint(1); i <= daq.NLeds; i++ {
-				checkErr(daq.SetLED(i, color))
-			}
-			time.Sleep(time.Millisecond * 100)
-		}
-		fmt.Println(j)
-	}
-}
-
-func checkOpendaq() {
-	//devices, err := godaq.ListDevicePorts()
-	//checkErr(err)
-	//if len(devices) == 0 {
-	//log.Fatal("No devices found")
-	//}
-	//fmt.Println(devices)
-
-	//daq, err := godaq.New(devices[0].Port)
-	daq, err := godaq.New("/dev/ttyACM0")
-	fmt.Println(daq.Name)
+func main() {
+	daq, err := godaq.New("/dev/ttyUSB0")
 	checkErr(err)
 	defer daq.Close()
 
-	model, version, _, err := daq.GetInfo()
+	model, version, serial, err := daq.GetInfo()
 	checkErr(err)
-	fmt.Println("model:", model, "version:", version)
+	fmt.Println("model:", model, "version:", version, "serial:", serial)
 
-	fmt.Println("\nDAC calib:")
+	checkErr(daq.SetLED(1, godaq.RED))
+
+	// Set the output voltage to 2 V
+	checkErr(daq.SetAnalog(1, 2.0))
+	fmt.Println("N DAC:", daq.NOutputs)
+	fmt.Println("N ADCs:", daq.NInputs)
 	for i := uint(1); i <= daq.NOutputs; i++ {
 		calib := daq.GetCalib(true, false, false, i, 0)
 		fmt.Println(calib)
@@ -57,29 +41,23 @@ func checkOpendaq() {
 		fmt.Printf("Calib %d (2nd stage): %v\n", i, calib)
 	}
 
-	//testLeds(daq)
+	// Configure the ADC: read from input 1 with gainID=1,
+	// average 10 samples each time
+	checkErr(daq.ConfigureADC(1, 0, 1, 10))
 
-	//for i := uint(1); i <= daq.NPIOs; i++ {
-	//checkErr(daq.SetPIODir(i, true))
-	//checkErr(daq.SetPIO(i, false))
-	//}
-
-	for i := uint(1); i <= daq.NOutputs; i++ {
-		checkErr(daq.SetAnalog(i, 10.0))
+	// Read 20 samples
+	for i := 0; i < 10; i++ {
+		val, err := daq.ReadAnalog()
+		checkErr(err)
+		fmt.Println(val)
+		time.Sleep(100 * time.Millisecond)
+		//read_val, err := daq.ReadPIO(4)
+		checkErr(err)
+		//fmt.Println("PIO:", read_val)
+		time.Sleep(500 * time.Millisecond)
 	}
-
-	//checkErr(daq.ConfigureADC(1, 0, 1, 10))
-
-	//fmt.Println("\nAnalog readings:")
-	//for i := 0; i < 8; i++ {
-	//val, err := daq.ReadAnalog()
-	//checkErr(err)
-	//fmt.Println(val)
-	//}
-}
-
-func main() {
-	for i := 0; i < 1; i++ {
-		checkOpendaq()
-	}
+	err = daq.SetPortDir(0)
+	checkErr(err)
+	err = daq.SetPort(42)
+	checkErr(err)
 }
